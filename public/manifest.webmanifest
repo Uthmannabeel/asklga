@@ -1,0 +1,10 @@
+{
+  "name": "AskLGA",
+  "short_name": "AskLGA",
+  "description": "Ask your local government and get the official answer with its source.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e6b3c",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
