@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ask } from "@/lib/ask";
+import { ask, AnswerServiceOffline } from "@/lib/ask";
 import { getLga } from "@/lib/queries";
 import { isStaff } from "@/lib/auth";
 
@@ -28,6 +28,9 @@ export async function POST(req: Request) {
     const result = await ask({ lgaId, question, scope, audience });
     return NextResponse.json(result);
   } catch (e) {
+    if (e instanceof AnswerServiceOffline) {
+      return NextResponse.json({ error: e.message, offline: true }, { status: 503 });
+    }
     const message = e instanceof Error ? e.message : "Unexpected error";
     return NextResponse.json({ error: message }, { status: 502 });
   }

@@ -21,6 +21,14 @@ import { searchChunks, type Scope } from "./queries";
 
 export const MODEL = process.env.ASKLGA_MODEL ?? "claude-opus-5";
 
+/** Thrown when the answer service cannot run at all (no key, bad key). The message is safe to show residents. */
+export class AnswerServiceOffline extends Error {
+  constructor() {
+    super("Answers are not switched on for this LGA yet. You can still browse the services, projects and documents here, or ask a person at the secretariat.");
+    this.name = "AnswerServiceOffline";
+  }
+}
+
 export const LANGS = ["en", "pcm", "ha", "yo", "ig", "other"] as const;
 export type Lang = (typeof LANGS)[number];
 
@@ -106,6 +114,10 @@ export async function ask(input: AskInput): Promise<AskResult> {
     ? passages.map((p) => `[${p.documentId}] ${p.title} (passage ${p.ord + 1})\n${p.text}`).join("\n\n")
     : "(no document passages matched this question)";
 
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error("[ask] ANTHROPIC_API_KEY is not set; the answer service is offline. Set it in .env.local.");
+    throw new AnswerServiceOffline();
+  }
   const client = new Anthropic();
   let parsed: Answer;
   try {
@@ -131,7 +143,8 @@ export async function ask(input: AskInput): Promise<AskResult> {
     }
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
-      throw new Error("ANTHROPIC_API_KEY is missing or invalid. Set it in .env.local.");
+      console.error("[ask] ANTHROPIC_API_KEY was rejected; the answer service is offline. Check the key in .env.local.");
+      throw new AnswerServiceOffline();
     }
     if (error instanceof Anthropic.RateLimitError) {
       throw new Error("The answer service is busy. Try again in a moment.");
