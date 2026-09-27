@@ -71,6 +71,18 @@ The answer engine replies in the question's language. The page chrome (navigatio
 
 `docker compose up --build` runs the portal with its own Postgres (see `docker-compose.yml`; copy `.env.example` to `.env` first). The image is a Next standalone build; put TLS in front and set `NEXT_PUBLIC_BASE_URL` to the https address so the session cookie is marked Secure. CI (`.github/workflows/ci.yml`) typechecks, lints, builds, boots the app and checks the key routes, then builds the container image. Licence: MIT.
 
+## Deploy on Vercel (demo link)
+
+Vercel is a fine host for the public demo and the submission link. It has no Nigerian region and it is serverless, so the pilot itself still belongs on a Nigerian-hosted server with the compose file above. Steps:
+
+1. Import the GitHub repository into a Vercel project (framework: Next.js, defaults).
+2. Storage tab: create a Postgres database (Neon through the Vercel Marketplace) and connect it to the project. This sets `DATABASE_URL`; use the pooled connection string.
+3. Environment variables: `ADMIN_PASSCODE` (long passphrase, used once to create the first administrator), `SESSION_SECRET` (random, 32+ characters), `GEMINI_API_KEY`, `ASKLGA_PROVIDER=gemini`, `NEXT_PUBLIC_BASE_URL=https://<project>.vercel.app`, and `AUTO_SEED=true` if the Obio/Akpor demo records should be loaded.
+4. Deploy. The first request runs the migrations and seeds the 774-LGA directory.
+5. Open `/admin`, sign in with the passcode, create your administrator account under Accounts. The passcode then stops working.
+
+Notes: the rate limiter is per serverless instance, so limits are looser than on one server; cold starts add a second or two while migrations are checked; the `output: "standalone"` setting is skipped automatically on Vercel.
+
 ## Safety and limits
 
 - **Public answers are budgeted.** Six questions a minute and sixty a day per connection, two thousand a day per LGA (`ASK_RATE_*`). Ticket, report, enquiry and feedback posts are limited to five or twenty a minute per connection. Buckets are in memory; a multi-server deployment should move them to Postgres or Redis.
