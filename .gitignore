@@ -44,3 +44,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# vercel cli and marketplace tooling
+.vercel
+.agents/
+.claude/
+skills-lock.json
