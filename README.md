@@ -23,15 +23,15 @@ Staff workspace (`/admin`, passcode sign-in)
 
 Answer engine (`src/lib/ask.ts`)
 - PII scrubbed before logging or any model call.
-- Claude (`claude-opus-5` by default) with structured output: language, answer, citations, escalate, disclaimer.
-- The LGA's approved registers are sent as a cached system block; document passages come from Postgres full-text search.
+- Switchable model provider (`ASKLGA_PROVIDER=gemini|anthropic`): Gemini (`gemini-3.8-flash` by default, called over REST, free tier is enough for a pilot) or Claude (`claude-opus-5`). Both return the same structured output: language, answer, citations, escalate, disclaimer.
+- The LGA's approved registers are sent as a system block (cached on Anthropic); document passages come from Postgres full-text search.
 - Post-checks: citations must be real approved records; an answer without a valid citation becomes a refusal; any figure of four or more digits must appear in a cited record or the answer is withheld and the question logged as a gap.
 
 ## Run it
 
 ```
 npm install
-copy .env.example .env.local     # set ANTHROPIC_API_KEY and ADMIN_PASSCODE
+copy .env.example .env.local     # set GEMINI_API_KEY (or ANTHROPIC_API_KEY) and ADMIN_PASSCODE
 npm run dev
 ```
 

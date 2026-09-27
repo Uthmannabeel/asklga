@@ -90,8 +90,20 @@ export async function getDocument(id: string) {
 /** Full-text search over document chunks (Postgres 'simple' config, so it works across languages). */
 export async function searchChunks(lgaId: string, scope: Scope, query: string, limit = 8) {
   const db = await getDb();
-  const cleaned = query.replace(/[^\p{L}\p{N}\s]/gu, " ").trim();
-  if (!cleaned) return [];
+  // The tsv column uses the 'simple' dictionary (no stop words, no stemming) so that Pidgin,
+  // Hausa, Yoruba and Igbo questions are searched as written. That means the query must be
+  // OR-based: requiring every word of a question ("how", "does", "the") to appear in a passage
+  // matched almost nothing. Terms are prefix-matched so "list" also finds "lists", and passages
+  // are ranked by how many terms they contain.
+  const terms = [...new Set(
+    query
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter((t) => t.length >= 3),
+  )];
+  if (!terms.length) return [];
+  const tsquery = terms.map((t) => `${t}:*`).join(" | ");
   const visibility = scope === "internal" ? sql`TRUE` : sql`${s.chunks.visibility} = 'public'`;
   const rows = await db
     .select({
@@ -100,7 +112,7 @@ export async function searchChunks(lgaId: string, scope: Scope, query: string, l
       ord: s.chunks.ord,
       text: s.chunks.text,
       title: s.documents.title,
-      rank: sql<number>`ts_rank(${s.chunks}.tsv, websearch_to_tsquery('simple', ${cleaned}))`,
+      rank: sql<number>`ts_rank(${s.chunks}.tsv, to_tsquery('simple', ${tsquery}))`,
     })
     .from(s.chunks)
     .innerJoin(s.documents, eq(s.documents.id, s.chunks.documentId))
@@ -109,10 +121,10 @@ export async function searchChunks(lgaId: string, scope: Scope, query: string, l
         eq(s.chunks.lgaId, lgaId),
         visibility,
         eq(s.documents.approval, "approved"),
-        sql`${s.chunks}.tsv @@ websearch_to_tsquery('simple', ${cleaned})`,
+        sql`${s.chunks}.tsv @@ to_tsquery('simple', ${tsquery})`,
       ),
     )
-    .orderBy(sql`ts_rank(${s.chunks}.tsv, websearch_to_tsquery('simple', ${cleaned})) DESC`)
+    .orderBy(sql`ts_rank(${s.chunks}.tsv, to_tsquery('simple', ${tsquery})) DESC`)
     .limit(limit);
   return rows;
 }

@@ -8,7 +8,7 @@
  *   plain    (under 140 words)
  *   safe     (no PII echoed, out-of-scope refused)
  *
- * Usage:  npm run dev   (in another terminal, with ANTHROPIC_API_KEY set)
+ * Usage:  npm run dev   (in another terminal, with GEMINI_API_KEY or ANTHROPIC_API_KEY set)
  *         node scripts/eval.mjs [baseUrl] [staffName] [passcode]
  * Internal-scope cases need a staff session, so pass the workspace name and passcode.
  */
@@ -53,8 +53,10 @@ async function main() {
     }
     const cited = r.citations.map((x) => x.id);
     const checks = {
-      correct: r.answered === c.expect.answered,
-      cited: !c.expect.cites || c.expect.cites.every((id) => cited.includes(id)),
+      correct: c.expect.answered === undefined || r.answered === c.expect.answered,
+      cited:
+        (!c.expect.cites || c.expect.cites.every((id) => cited.includes(id))) &&
+        (!c.expect.citesAny || c.expect.citesAny.some((id) => cited.includes(id))),
       complete: !c.expect.figures || c.expect.figures.every((f) => r.answer.replace(/[,\s]/g, "").includes(f)),
       language: r.language === c.lang || (c.lang === "pcm" && r.language === "en"),
       plain: r.answer.split(/\s+/).length <= 140,
