@@ -278,7 +278,7 @@ export type AskResult = {
   latencyMs: number;
   piiRemoved: number;
   figureCheck: "passed" | "failed" | "skipped";
-  mode: "model" | "search";
+  mode: "model" | "search" | "none";
 };
 
 /**
@@ -331,9 +331,14 @@ export async function ask(input: AskInput): Promise<AskResult> {
   const registerBlock = `# APPROVED RECORDS FOR THIS LGA (scope: ${scope})\n\n${register.text}`;
   const userBlock = `Audience: ${audience}.\n\nRelevant document passages:\n${passageBlock}\n\nQuestion:\n${question}`;
   const searchOnly = scope === "internal" && INTERNAL_MODE === "search";
+  // An LGA with nothing approved yet gets no model call: the question is logged as a gap so the
+  // LGA (and the national demand signal) can see it, and no quota is spent on a certain refusal.
+  const nothingToAnswerFrom = register.ids.size === 0 && passages.length === 0;
   const parsed: Answer = looksLikeInstruction(question)
     ? declined("Instruction-like question refused before the model was called")
-    : searchOnly
+    : nothingToAnswerFrom
+      ? declined("This LGA has no approved records yet")
+      : searchOnly
       ? searchOnlyAnswer(passages)
       : PROVIDER === "gemini"
         ? await generateWithGemini(SYSTEM, registerBlock, userBlock)
@@ -418,6 +423,6 @@ export async function ask(input: AskInput): Promise<AskResult> {
     latencyMs,
     piiRemoved: removed,
     figureCheck,
-    mode: searchOnly ? "search" : "model",
+    mode: nothingToAnswerFrom ? "none" : searchOnly ? "search" : "model",
   };
 }

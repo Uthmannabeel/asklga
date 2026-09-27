@@ -442,6 +442,80 @@ export async function refetchDocument(fd: FormData) {
   redirect(`/admin/${lgaId}/documents?edit=${id}&ok=changed#form`);
 }
 
+/* ---------- Federation allocations (national import) ---------- */
+
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); cell = "";
+      if (row.some((x) => x.trim())) rows.push(row);
+      row = [];
+    } else cell += c;
+  }
+  row.push(cell);
+  if (row.some((x) => x.trim())) rows.push(row);
+  return rows;
+}
+
+const norm = (v: string) => v.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\bstate\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+
+export async function importAllocations(fd: FormData) {
+  const me = await requireStaff(undefined, "admin");
+  const file = fd.get("file");
+  const source = str(fd, "source", 300);
+  const sourceUrl = safeUrl(fd.get("sourceUrl"));
+  if (!(file instanceof File) || !source) redirect(`/admin/allocations?error=${encodeURIComponent("Choose a CSV file and name the source.")}`);
+  if (file.size > 5 * 1024 * 1024) redirect(`/admin/allocations?error=${encodeURIComponent("The file is larger than 5 MB.")}`);
+  const rows = parseCsv(await file.text());
+  if (rows.length < 2) redirect(`/admin/allocations?error=${encodeURIComponent("The file has no data rows.")}`);
+  const header = rows[0].map((h) => norm(h).replace(/ /g, "_"));
+  const col = (name: string) => header.indexOf(name);
+  const iState = col("state"), iLga = col("lga"), iPeriod = col("period"), iGross = col("gross_ngn"), iNet = col("net_ngn");
+  if (iState < 0 || iLga < 0 || iPeriod < 0 || (iGross < 0 && iNet < 0)) redirect(`/admin/allocations?error=${encodeURIComponent("Columns must include state, lga, period and gross_ngn or net_ngn.")}`);
+  const db = await getDb();
+  const lgas = await db.select({ id: s.lgas.id, name: s.lgas.name, state: s.lgas.state }).from(s.lgas);
+  const byKey = new Map(lgas.map((l) => [`${norm(l.state)}|${norm(l.name)}`, l.id]));
+  const money = (v: string | undefined) => {
+    if (v == null) return null;
+    const n = Math.round(Number(v.replace(/[₦N,\s]/gi, "")));
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  let imported = 0;
+  const unmatched: string[] = [];
+  const bad: string[] = [];
+  for (const r of rows.slice(1)) {
+    const key = `${norm(r[iState] ?? "")}|${norm(r[iLga] ?? "")}`;
+    const lgaId = byKey.get(key);
+    const period = (r[iPeriod] ?? "").trim();
+    if (!lgaId) { unmatched.push(`${r[iState]}/${r[iLga]}`); continue; }
+    if (me.lgaId && lgaId !== me.lgaId) continue;
+    if (!/^\d{4}-\d{2}$/.test(period)) { bad.push(`${r[iLga]} ${period}`); continue; }
+    const grossNgn = iGross >= 0 ? money(r[iGross]) : null;
+    const netNgn = iNet >= 0 ? money(r[iNet]) : null;
+    if (grossNgn == null && netNgn == null) { bad.push(`${r[iLga]} ${period}`); continue; }
+    await db
+      .insert(s.allocations)
+      .values({ lgaId, period, grossNgn, netNgn, source, sourceUrl })
+      .onConflictDoUpdate({ target: [s.allocations.lgaId, s.allocations.period], set: { grossNgn, netNgn, source, sourceUrl } });
+    imported += 1;
+  }
+  const msg = `Imported ${imported} row${imported === 1 ? "" : "s"}.${unmatched.length ? ` Unmatched (${unmatched.length}): ${unmatched.slice(0, 12).join("; ")}${unmatched.length > 12 ? " …" : ""}.` : ""}${bad.length ? ` Bad period or amount (${bad.length}): ${bad.slice(0, 8).join("; ")}.` : ""}`;
+  revalidatePath("/");
+  redirect(`/admin/allocations?ok=${encodeURIComponent(msg)}`);
+}
+
 /* ---------- Questions: gaps, flags, tickets, enquiries ---------- */
 
 export async function assignGap(fd: FormData) {

@@ -17,16 +17,46 @@ import {
  */
 
 export const lgas = pgTable("lgas", {
-  id: text("id").primaryKey(), // slug, e.g. "obio-akpor"
+  id: text("id").primaryKey(), // slug, e.g. "obio-akpor"; state-qualified when two states share a name
   name: text("name").notNull(),
   state: text("state").notNull(),
+  zone: text("zone"), // geopolitical zone
   headquarters: text("headquarters"),
   population: integer("population"),
+  populationYear: integer("population_year"),
+  populationSource: text("population_source"),
+  wards: jsonb("wards").$type<string[]>().notNull().default([]),
   lat: doublePrecision("lat"),
   lng: doublePrecision("lng"),
   intro: text("intro"),
   demo: boolean("demo").notNull().default(false),
+  joinedAt: timestamp("joined_at", { withTimezone: true }), // when the LGA's data owner first approved a record
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Federation Account (FAAC) allocation to an LGA for one month, from the published tables. */
+export const allocations = pgTable("allocations", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  lgaId: text("lga_id").notNull().references(() => lgas.id),
+  period: text("period").notNull(), // YYYY-MM
+  grossNgn: bigint("gross_ngn", { mode: "number" }),
+  netNgn: bigint("net_ngn", { mode: "number" }),
+  source: text("source").notNull(),
+  sourceUrl: text("source_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Published accuracy runs, one per eval per LGA; the public scoreboard shows the latest. */
+export const evalRuns = pgTable("eval_runs", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  lgaId: text("lga_id").notNull().references(() => lgas.id),
+  ranAt: timestamp("ran_at", { withTimezone: true }).notNull().defaultNow(),
+  cases: integer("cases").notNull(),
+  pass: integer("pass").notNull(),
+  accuracy: integer("accuracy").notNull(),
+  figureFailures: integer("figure_failures").notNull().default(0),
+  model: text("model"),
+  note: text("note"),
 });
 
 export const services = pgTable("services", {

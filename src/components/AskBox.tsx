@@ -16,7 +16,7 @@ type Result = {
   disclaimer: "none" | "legal" | "medical";
   latencyMs: number;
   figureCheck: string;
-  mode?: "model" | "search";
+  mode?: "model" | "search" | "none";
 };
 
 type Problem = { kind: "offline" | "busy" | "network" | "input" | "server"; message: string };

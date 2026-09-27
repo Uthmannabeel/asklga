@@ -19,11 +19,20 @@ export async function SiteHeader({ lga, demo, back }: { lga?: { id: string; name
               <Link href={`/${lga.id}/projects`} className="nav-link">{t.nav.projects}</Link>
               <Link href={`/${lga.id}/assets`} className="nav-link">{t.nav.assets}</Link>
               <Link href={`/${lga.id}/services`} className="nav-link">{t.nav.services}</Link>
+              <Link href={`/${lga.id}/money`} className="nav-link">{t.nav.money}</Link>
               <Link href={`/${lga.id}/investment`} className="nav-link">{t.nav.investment}</Link>
               <Link href={`/${lga.id}/documents`} className="nav-link">{t.nav.documents}</Link>
               <Link href={`/${lga.id}/open-data`} className="nav-link">{t.nav.openData}</Link>
             </nav>
-          ) : null}
+          ) : (
+            <nav aria-label="National" className="flex flex-wrap gap-x-5 gap-y-0 small">
+              <Link href="/" className="nav-link">Directory</Link>
+              <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
+              <Link href="/insights" className="nav-link">Insights</Link>
+              <Link href="/standard" className="nav-link">Standard</Link>
+              <Link href="/join" className="nav-link">Join</Link>
+            </nav>
+          )}
           <nav aria-label={t.language} className="ml-auto flex flex-wrap gap-x-3 small">
             {UI_LANGS.map((code) => (
               <a

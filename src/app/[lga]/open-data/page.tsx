@@ -10,6 +10,7 @@ export default async function OpenDataPage({ params }: { params: Promise<{ lga: 
     ["assets", "Public assets inventory"],
     ["services", "Service directory"],
     ["investment", "Investment profile"],
+    ["allocations", "Federation allocations by month"],
   ];
   return (
     <LgaShell lgaId={lga}>

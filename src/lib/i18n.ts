@@ -18,7 +18,7 @@ export function isUiLang(x: unknown): x is UiLang {
 }
 
 const en = {
-  nav: { ask: "Ask", projects: "Projects", assets: "Public assets", services: "Services", investment: "Investment", documents: "Documents", openData: "Open data" },
+  nav: { ask: "Ask", projects: "Projects", assets: "Public assets", services: "Services", money: "Money", investment: "Investment", documents: "Documents", openData: "Open data" },
   skip: "Skip to content",
   language: "Language",
   pendingReview: "This translation is a draft awaiting review by a native speaker.",
@@ -96,7 +96,7 @@ const en = {
 export type Dict = typeof en;
 
 const pcm: Dict = {
-  nav: { ask: "Ask", projects: "Projects", assets: "Public property", services: "Services", investment: "Investment", documents: "Documents", openData: "Open data" },
+  nav: { ask: "Ask", projects: "Projects", assets: "Public property", services: "Services", money: "Money", investment: "Investment", documents: "Documents", openData: "Open data" },
   skip: "Jump go content",
   language: "Language",
   pendingReview: "Dis translation na draft; person wey sabi di language well never check am.",
@@ -172,7 +172,7 @@ const pcm: Dict = {
 };
 
 const ha: Dict = {
-  nav: { ask: "Tambaya", projects: "Ayyuka", assets: "Kadarorin jama'a", services: "Hidimomi", investment: "Zuba jari", documents: "Takardu", openData: "Bayanan buɗe" },
+  nav: { ask: "Tambaya", projects: "Ayyuka", assets: "Kadarorin jama'a", services: "Hidimomi", money: "Kuɗi", investment: "Zuba jari", documents: "Takardu", openData: "Bayanan buɗe" },
   skip: "Tsallake zuwa abun ciki",
   language: "Harshe",
   pendingReview: "Wannan fassara daftari ce; ba a duba ta ba tukuna daga mai jin harshen.",
@@ -248,7 +248,7 @@ const ha: Dict = {
 };
 
 const yo: Dict = {
-  nav: { ask: "Béèrè", projects: "Àwọn iṣẹ́ àgbéṣe", assets: "Ohun ìní gbogbo ènìyàn", services: "Àwọn iṣẹ́", investment: "Ìdókòwò", documents: "Àwọn ìwé", openData: "Dátà ṣíṣí" },
+  nav: { ask: "Béèrè", projects: "Àwọn iṣẹ́ àgbéṣe", assets: "Ohun ìní gbogbo ènìyàn", services: "Àwọn iṣẹ́", money: "Owó", investment: "Ìdókòwò", documents: "Àwọn ìwé", openData: "Dátà ṣíṣí" },
   skip: "Fò sí àkóónú",
   language: "Èdè",
   pendingReview: "Ìtumọ̀ yìí jẹ́ àkọsílẹ̀ àkọ́kọ́; ẹni tó mọ èdè náà dáadáa kò tíì ṣàyẹ̀wò rẹ̀.",
@@ -324,7 +324,7 @@ const yo: Dict = {
 };
 
 const ig: Dict = {
-  nav: { ask: "Jụọ", projects: "Ọrụ ndị a na-arụ", assets: "Ihe onwunwe ọha", services: "Ọrụ", investment: "Itinye ego", documents: "Akwụkwọ", openData: "Data mepere emepe" },
+  nav: { ask: "Jụọ", projects: "Ọrụ ndị a na-arụ", assets: "Ihe onwunwe ọha", services: "Ọrụ", money: "Ego", investment: "Itinye ego", documents: "Akwụkwọ", openData: "Data mepere emepe" },
   skip: "Gafere gaa n'ọdịnaya",
   language: "Asụsụ",
   pendingReview: "Nsụgharị a bụ ihe e dere na mbụ; onye ma asụsụ a nke ọma enyochabeghị ya.",

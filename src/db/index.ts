@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "./schema";
 import { seedIfEmpty } from "./seed";
+import { seedDirectory } from "./directory";
 
 /**
  * One database module, two drivers.
@@ -53,6 +54,9 @@ async function create(): Promise<Db> {
   if (autoSeed === "true") {
     await seedIfEmpty(db);
   }
+  // The national directory is not demo data: every LGA in the country gets a row.
+  const added = await seedDirectory(db);
+  if (added) console.log(`[db] national directory: added ${added} LGAs`);
   return db;
 }
 

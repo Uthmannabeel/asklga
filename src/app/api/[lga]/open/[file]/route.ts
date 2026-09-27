@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLga, listAssets, listProfile, listProjects, listServices } from "@/lib/queries";
+import { allocationsFor } from "@/lib/national";
 
 /**
  * Open data. GET /api/{lga}/open/projects.json | projects.csv | assets.json | assets.csv |
@@ -24,6 +25,7 @@ const COLUMNS: Record<string, string[]> = {
   assets: ["id", "lgaId", "name", "type", "ward", "lat", "lng", "condition", "lastInspected", "notes", "lastVerified", "source", "sourceUrl", "updatedAt"],
   services: ["id", "lgaId", "name", "category", "summary", "eligibility", "documents", "steps", "office", "role", "contact", "turnaround", "lastVerified", "source", "sourceUrl", "updatedAt"],
   investment: ["id", "lgaId", "section", "title", "body", "lastVerified", "source", "sourceUrl", "updatedAt"],
+  allocations: ["lgaId", "period", "grossNgn", "netNgn", "source", "sourceUrl"],
 };
 
 /** Drops the internal approval flag; every row served here is approved by definition. */
@@ -54,6 +56,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ lga: string; f
       break;
     case "investment":
       rows = publicRows(await listProfile(lga));
+      break;
+    case "allocations":
+      rows = (await allocationsFor(lga, 120)).map((r) => ({ lgaId: r.lgaId, period: r.period, grossNgn: r.grossNgn, netNgn: r.netNgn, source: r.source, sourceUrl: r.sourceUrl }));
       break;
     default:
       return NextResponse.json({ error: "Unknown dataset" }, { status: 404 });

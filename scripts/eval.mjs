@@ -76,6 +76,15 @@ async function main() {
   console.log(JSON.stringify(summary, null, 2));
   fs.mkdirSync("eval/results", { recursive: true });
   fs.writeFileSync(`eval/results/${summary.ranAt.slice(0, 19).replace(/[:T]/g, "-")}.json`, JSON.stringify({ summary, rows }, null, 2));
+  // Publish the run on the LGA's scoreboard when signed in.
+  if (cookie) {
+    const res = await fetch(`${base}/api/eval-result`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", cookie },
+      body: JSON.stringify({ lgaId: "obio-akpor", cases: summary.cases, pass: summary.pass, figureFailures: figureFailures, note: `eval/questions.json, ${cases.length} cases` }),
+    });
+    console.log(res.ok ? "Published to the scoreboard." : `Scoreboard publish failed: ${res.status}`);
+  }
 }
 
 main().catch((e) => {

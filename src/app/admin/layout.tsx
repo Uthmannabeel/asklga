@@ -21,6 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <Link key={l.id} href={`/admin/${l.id}`} className="nav-link">{l.name}</Link>
               ))}
               {session.role === "admin" ? <Link href="/admin/users" className="nav-link">Accounts</Link> : null}
+              {session.role === "admin" ? <Link href="/admin/allocations" className="nav-link">Allocations</Link> : null}
               <Link href="/admin/account" className="nav-link">Account</Link>
             </nav>
           ) : null}

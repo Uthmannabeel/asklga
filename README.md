@@ -39,6 +39,15 @@ Open http://localhost:3000. With no `DATABASE_URL`, an embedded Postgres (PGlite
 
 Production: set `DATABASE_URL` to a Postgres hosted in Nigeria (demo records are never seeded when it is set), a long `ADMIN_PASSCODE`, a random `SESSION_SECRET`, `NEXT_PUBLIC_BASE_URL`, and the model key. Ship `src/db/migrations` with the build (it is traced automatically for standalone output). Enter real records through the staff workspace or a migration.
 
+## The national layer
+
+Every one of Nigeria's 774 local government areas has a page from the first start: `src/db/lgas.json` (36 states and the FCT, with geopolitical zones) is merged into the `lgas` table on boot, and existing rows are never overwritten. An LGA that has not published records shows what the federal system publishes about it, still takes questions (logged as gaps, with no model call, so no quota is spent on a certain refusal), and links to `/join`.
+
+- **Money** (`/{lga}/money`): monthly Federation Account allocations per LGA, imported from the published tables as CSV under Allocations in the workspace (server administrators; template at `/allocations-template.csv`). Figures are published as-is with the source linked; the portal never computes or adjusts them.
+- **The LGA Record Standard** (`/standard`): the five rules and field definitions for every register, with JSON Schemas at `/api/standard/{projects,assets,services,investment,documents,allocations}.schema.json` and a DCAT-style catalogue of everything published at `/api/catalogue.json`.
+- **Scoreboard** (`/scoreboard`): per LGA, approved records, questions and answer rate over 30 days, open gaps, and the latest measured accuracy. The eval harness posts its result to `/api/eval-result` when signed in, so accuracy is published, not claimed.
+- **Insights** (`/insights`): the demand signal. Questions by state, language and audience, and the questions residents repeat that no LGA has a record for. Only questions asked more than once are listed.
+
 ## Staff accounts
 
 - **First run:** sign in at `/admin` with `ADMIN_PASSCODE`, open Accounts, create the first administrator. The passcode then stops working. Or, with the server stopped: `npm run create-admin -- you@lga.gov.ng "Your Name" <password>`.
