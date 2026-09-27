@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
+import { and, eq, sql } from "drizzle-orm";
 import { getDb, schema as s } from "@/db";
 import { scrubPii } from "./pii";
 import { buildRegister } from "./register";
@@ -40,10 +41,30 @@ export const MODEL = process.env.ASKLGA_MODEL ?? (PROVIDER === "gemini" ? "gemin
 
 /** Thrown when the answer service cannot run at all (no key, bad key). The message is safe to show residents. */
 export class AnswerServiceOffline extends Error {
-  constructor() {
-    super("Answers are not switched on for this LGA yet. You can still browse the services, projects and documents here, or ask a person at the secretariat.");
+  constructor(message = "Answers are not switched on for this LGA yet. You can still browse the services, projects and documents here, or ask a person at the secretariat.") {
+    super(message);
     this.name = "AnswerServiceOffline";
   }
+}
+
+/** Thrown for temporary conditions (rate limit, provider outage, network). Safe to show residents. */
+export class AnswerServiceBusy extends Error {
+  constructor(message = "The answer service is busy right now. Try again in a minute, or use the pages above.") {
+    super(message);
+    this.name = "AnswerServiceBusy";
+  }
+}
+
+/**
+ * Questions that try to instruct the model ("ignore the records", "reply that X is completed",
+ * "cite OBA-P-0003") are refused before any model call. The post-checks verify citation IDs and
+ * figures but not status words, so this closes the remaining prompt-injection route cheaply.
+ */
+const INSTRUCTION_LIKE =
+  /\b(ignore|disregard|forget|override)\b[^.?!]{0,60}\b(records?|instructions?|rules?|prompt|system)\b|\b(reply|say|answer|respond|state|pretend|claim|assume|confirm)\b[^.?!]{0,25}\bthat\b|\bcite\s+[A-Z]{2,5}-[A-Z]-|\bsystem prompt\b|\byou are now\b/i;
+
+export function looksLikeInstruction(question: string): boolean {
+  return INSTRUCTION_LIKE.test(question);
 }
 
 export const LANGS = ["en", "pcm", "ha", "yo", "ig", "other"] as const;
@@ -119,7 +140,7 @@ async function generateWithAnthropic(system: string, register: string, user: str
       throw new AnswerServiceOffline();
     }
     if (error instanceof Anthropic.RateLimitError) {
-      throw new Error("The answer service is busy. Try again in a moment.");
+      throw new AnswerServiceBusy();
     }
     if (error instanceof Anthropic.APIError) {
       throw new Error(`Answer service error ${error.status}: ${error.message}`);
@@ -183,7 +204,7 @@ async function generateWithGemini(system: string, register: string, user: string
     } catch (netErr) {
       // DNS/TLS/socket hiccup before any response: treat like a 503 and retry.
       res = undefined;
-      if (attempt === waits.length) throw new Error("The answer service could not be reached. Try again in a moment.");
+      if (attempt === waits.length) throw new AnswerServiceBusy("The answer service could not be reached. Check the connection and try again in a moment.");
       console.warn(`[ask] Gemini network error on attempt ${attempt + 1} (${netErr instanceof Error ? netErr.message : "unknown"}); retrying in ${waits[attempt] / 1000}s`);
       await new Promise((r) => setTimeout(r, waits[attempt]));
       continue;
@@ -193,7 +214,7 @@ async function generateWithGemini(system: string, register: string, user: string
     // A per-day quota will not clear by waiting; say so instead of burning retries.
     if (res.status === 429 && /PerDay/i.test(detail)) {
       console.error(`[ask] Gemini daily free-tier quota for ${MODEL} is used up: ${detail.slice(0, 200)}`);
-      throw new Error("The answer service has reached its limit for today. Try again tomorrow, or ask a person at the secretariat.");
+      throw new AnswerServiceOffline("The answer service has reached its limit for today. Try again tomorrow, or ask a person at the secretariat.");
     }
     if (attempt === waits.length) break;
     const retryAfter = Number(res.headers.get("retry-after"));
@@ -249,9 +270,14 @@ export type AskResult = {
   figureCheck: "passed" | "failed" | "skipped";
 };
 
+/** Joins digit groups ("185,000,000", "185 000 000") without gluing separate numbers ("2026 120"). */
+function joinDigitGroups(text: string): string {
+  return text.replace(/(?<=\d)[,\s](?=\d{3}\b)/g, "");
+}
+
 function digitsIn(text: string): string[] {
   const out = new Set<string>();
-  for (const m of text.replace(/[,\s](?=\d{3}\b)/g, "").matchAll(/\d{4,}/g)) out.add(m[0]);
+  for (const m of joinDigitGroups(text).matchAll(/\d{4,}/g)) out.add(m[0]);
   return [...out];
 }
 
@@ -272,15 +298,18 @@ export async function ask(input: AskInput): Promise<AskResult> {
 
   const registerBlock = `# APPROVED RECORDS FOR THIS LGA (scope: ${scope})\n\n${register.text}`;
   const userBlock = `Audience: ${audience}.\n\nRelevant document passages:\n${passageBlock}\n\nQuestion:\n${question}`;
-  const parsed: Answer =
-    PROVIDER === "gemini"
+  const parsed: Answer = looksLikeInstruction(question)
+    ? declined("Instruction-like question refused before the model was called")
+    : PROVIDER === "gemini"
       ? await generateWithGemini(SYSTEM, registerBlock, userBlock)
       : await generateWithAnthropic(SYSTEM, registerBlock, userBlock);
 
   // Post-check 1: citations must be real, approved records.
+  // The record type comes from the register, not the model, so links always resolve.
+  const seen = new Set<string>();
   const citations = parsed.citations
-    .filter((c) => register.ids.has(c.id))
-    .map((c) => ({ type: c.type, id: c.id, label: register.ids.get(c.id) ?? c.id }));
+    .filter((c) => register.ids.has(c.id) && !seen.has(c.id) && seen.add(c.id))
+    .map((c) => ({ type: register.types.get(c.id) ?? c.type, id: c.id, label: register.ids.get(c.id) ?? c.id }));
 
   let answered = parsed.answered && citations.length > 0;
   // Models tend to write the record IDs inside the answer as well ("... [OBA-D-0002]"). The
@@ -289,7 +318,7 @@ export async function ask(input: AskInput): Promise<AskResult> {
   let answer = parsed.answer;
   for (const id of register.ids.keys()) answer = answer.split(`[${id}]`).join("").split(id).join("");
   answer = answer
-    .replace(/\(\s*\)|\[\s*\]/g, "")
+    .replace(/\([\s,;]*\)|\[[\s,;]*\]/g, "")
     .replace(/\s+([.,;:])/g, "$1")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
@@ -299,8 +328,8 @@ export async function ask(input: AskInput): Promise<AskResult> {
   if (answered) {
     const figures = digitsIn(answer);
     if (figures.length) {
-      const cited = citations.map((c) => (register.recordText.get(c.id) ?? "").replace(/[,\s](?=\d{3}\b)/g, "")).join("\n");
-      const passageText = passages.map((p) => p.text).join("\n").replace(/[,\s](?=\d{3}\b)/g, "");
+      const cited = joinDigitGroups(citations.map((c) => register.recordText.get(c.id) ?? "").join("\n"));
+      const passageText = joinDigitGroups(passages.map((p) => p.text).join("\n"));
       const missing = figures.filter((f) => !cited.includes(f) && !passageText.includes(f));
       figureCheck = missing.length ? "failed" : "passed";
       if (missing.length) answered = false;
@@ -312,6 +341,19 @@ export async function ask(input: AskInput): Promise<AskResult> {
 
   const latencyMs = Date.now() - started;
   const db = await getDb();
+
+  // One open gap per distinct question: repeats of an unanswered question are logged but do not
+  // add another row to the data-gap queue.
+  let gapStatus: string | null = answered ? null : "open";
+  if (!answered) {
+    const dup = await db
+      .select({ id: s.questions.id })
+      .from(s.questions)
+      .where(and(eq(s.questions.lgaId, input.lgaId), eq(s.questions.gapStatus, "open"), sql`lower(${s.questions.question}) = ${question.toLowerCase()}`))
+      .limit(1);
+    if (dup.length) gapStatus = "duplicate";
+  }
+
   const [row] = await db
     .insert(s.questions)
     .values({
@@ -325,7 +367,7 @@ export async function ask(input: AskInput): Promise<AskResult> {
       answered,
       escalated: parsed.escalate,
       latencyMs,
-      gapStatus: answered ? null : "open",
+      gapStatus,
       gapResolution: answered ? null : parsed.gap_summary,
     })
     .returning({ id: s.questions.id });

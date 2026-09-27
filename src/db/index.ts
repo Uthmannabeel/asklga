@@ -33,15 +33,21 @@ async function create(): Promise<Db> {
     db = drizzle(client, { schema }) as unknown as Db;
   }
 
-  const migration = fs.readFileSync(
-    path.join(process.cwd(), "src", "db", "migrations", "0000_init.sql"),
-    "utf8",
-  );
+  // The migration is read from disk so it stays plain SQL. next.config.ts lists it in
+  // outputFileTracingIncludes so a standalone/serverless build still ships it.
+  const migrationPath = path.join(process.cwd(), "src", "db", "migrations", "0000_init.sql");
+  if (!fs.existsSync(migrationPath)) {
+    throw new Error(`Database migration not found at ${migrationPath}. Deploy the src/db/migrations folder with the app.`);
+  }
+  const migration = fs.readFileSync(migrationPath, "utf8");
   for (const statement of migration.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
     await db.execute(sql.raw(statement));
   }
 
-  if (process.env.AUTO_SEED !== "false") {
+  // Demo records are seeded only into the embedded local database unless AUTO_SEED=true is set
+  // explicitly, so a real deployment with DATABASE_URL never starts with fictional records.
+  const autoSeed = process.env.AUTO_SEED ?? (process.env.DATABASE_URL ? "false" : "true");
+  if (autoSeed === "true") {
     await seedIfEmpty(db);
   }
   return db;
@@ -49,7 +55,12 @@ async function create(): Promise<Db> {
 
 export function getDb(): Promise<Db> {
   if (!globalForDb.__asklgaDb) {
-    globalForDb.__asklgaDb = create();
+    // If bootstrap fails (database briefly unreachable, seed error), forget the rejected
+    // promise so the next request retries instead of failing for the life of the process.
+    globalForDb.__asklgaDb = create().catch((e) => {
+      delete globalForDb.__asklgaDb;
+      throw e;
+    });
   }
   return globalForDb.__asklgaDb;
 }

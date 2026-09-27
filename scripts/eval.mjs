@@ -10,7 +10,8 @@
  *
  * Usage:  npm run dev   (in another terminal, with GEMINI_API_KEY or ANTHROPIC_API_KEY set)
  *         node scripts/eval.mjs [baseUrl] [staffName] [passcode]
- * Internal-scope cases need a staff session, so pass the workspace name and passcode.
+ * Pass the workspace name and passcode: the staff session enables the internal-scope case and
+ * exempts the harness from the per-connection rate limit on /api/ask.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -40,9 +41,11 @@ async function main() {
   let figureFailures = 0;
   for (const c of cases) {
     const started = Date.now();
+    // The staff cookie is sent on every request: it lifts the per-connection rate limit for the
+    // harness, and the server still forces public scope unless the case asks for internal.
     const res = await fetch(`${base}/api/ask`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...(cookie && c.scope === "internal" ? { cookie } : {}) },
+      headers: { "Content-Type": "application/json", ...(cookie ? { cookie } : {}) },
       body: JSON.stringify({ lgaId: "obio-akpor", question: c.question, audience: c.audience, scope: c.scope ?? "public" }),
     });
     const r = await res.json();

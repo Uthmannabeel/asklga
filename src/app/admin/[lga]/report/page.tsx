@@ -34,7 +34,8 @@ export default async function MonthlyReport({ params }: { params: Promise<{ lga:
   const updates = await db
     .select({ projectId: s.statusUpdates.projectId, newStatus: s.statusUpdates.newStatus, createdAt: s.statusUpdates.createdAt })
     .from(s.statusUpdates)
-    .where(gte(s.statusUpdates.createdAt, since))
+    .innerJoin(s.projects, eq(s.projects.id, s.statusUpdates.projectId))
+    .where(and(eq(s.projects.lgaId, lga), gte(s.statusUpdates.createdAt, since)))
     .orderBy(desc(s.statusUpdates.createdAt))
     .limit(20);
 

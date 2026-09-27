@@ -13,7 +13,7 @@ export function formatNaira(n: number | null | undefined): string {
 
 export type CitationRef = { type: "project" | "service" | "asset" | "profile" | "document"; id: string };
 
-export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text: string; ids: Map<string, string>; recordText: Map<string, string> }> {
+export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text: string; ids: Map<string, string>; types: Map<string, CitationRef["type"]>; recordText: Map<string, string> }> {
   const [projects, services, assets, profile, documents] = await Promise.all([
     listProjects(lgaId),
     listServices(lgaId),
@@ -23,6 +23,7 @@ export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text
   ]);
 
   const ids = new Map<string, string>(); // id -> label
+  const types = new Map<string, CitationRef["type"]>(); // id -> record type, used to build links
   const recordText = new Map<string, string>(); // id -> rendered text, used for the figure check
   const lines: string[] = [];
 
@@ -36,6 +37,7 @@ export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text
     ].join("\n");
     lines.push(t);
     ids.set(p.id, p.name);
+    types.set(p.id, "project");
     recordText.set(p.id, t);
   }
 
@@ -44,6 +46,7 @@ export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text
     const t = `[${a.id}] ${a.name}\ntype: ${a.type}; ward: ${a.ward ?? "not recorded"}; condition: ${a.condition ?? "unknown"}; last inspected: ${a.lastInspected ?? "never"}${a.notes ? `; notes: ${a.notes}` : ""}`;
     lines.push(t);
     ids.set(a.id, a.name);
+    types.set(a.id, "asset");
     recordText.set(a.id, t);
   }
 
@@ -61,6 +64,7 @@ export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text
       .join("\n");
     lines.push(t);
     ids.set(sv.id, sv.name);
+    types.set(sv.id, "service");
     recordText.set(sv.id, t);
   }
 
@@ -69,6 +73,7 @@ export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text
     const t = `[${sec.id}] ${sec.title}\n${sec.body}`;
     lines.push(t);
     ids.set(sec.id, sec.title);
+    types.set(sec.id, "profile");
     recordText.set(sec.id, t);
   }
 
@@ -76,8 +81,9 @@ export async function buildRegister(lgaId: string, scope: Scope): Promise<{ text
   for (const d of documents) {
     lines.push(`[${d.id}] ${d.title} (${d.kind}${d.visibility === "internal" ? ", internal" : ""})`);
     ids.set(d.id, d.title);
+    types.set(d.id, "document");
     recordText.set(d.id, d.body);
   }
 
-  return { text: lines.join("\n"), ids, recordText };
+  return { text: lines.join("\n"), ids, types, recordText };
 }

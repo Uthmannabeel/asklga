@@ -7,6 +7,9 @@ import { StatusMark, statusLabel } from "@/components/StatusMark";
 import { ReportForm } from "@/components/ReportForm";
 import { getProject, listPhotoReports, listStatusUpdates } from "@/lib/queries";
 import { formatNaira } from "@/lib/register";
+import { formatDate } from "@/lib/format";
+
+const httpOnly = (u: string | null | undefined) => (u && /^https?:\/\//i.test(u) ? u : null);
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +41,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ lga: s
               <tr><th>Contractor</th><td>{p.contractor ?? "Not published"}</td></tr>
               <tr><th>Start</th><td>{p.startDate ?? "Not recorded"}</td></tr>
               <tr><th>Expected completion</th><td>{p.expectedCompletion ?? "Not recorded"}</td></tr>
+              <tr><th>Last verified</th><td>{p.lastVerified ? formatDate(p.lastVerified) : "Not yet verified"}</td></tr>
             </tbody>
           </table>
 
@@ -48,13 +52,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ lga: s
               {p.evidence.map((e, i) => (
                 <li key={i} className="register-row">
                   <span>{e.caption}</span>
-                  <span className="small muted">{e.date}{e.url ? <>, <a href={e.url}>photo</a></> : ", photo not yet uploaded"}</span>
+                  <span className="small muted">{formatDate(e.date)}{httpOnly(e.url) ? <>, <a href={httpOnly(e.url)!} rel="noopener">photo</a></> : ", photo not yet uploaded"}</span>
                 </li>
               ))}
               {reports.map((r) => (
                 <li key={r.id} className="register-row">
                   <span>{r.note}</span>
-                  <span className="small muted">Resident report, {r.createdAt.toISOString().slice(0, 10)}{r.imageUrl ? <>, <a href={r.imageUrl}>photo</a></> : ""}</span>
+                  <span className="small muted">Resident report, {formatDate(r.createdAt)}{httpOnly(r.imageUrl) ? <>, <a href={httpOnly(r.imageUrl)!} rel="noopener">photo</a></> : ""}</span>
                 </li>
               ))}
             </ul>
@@ -67,7 +71,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ lga: s
               {updates.map((u) => (
                 <li key={u.id} className="register-row">
                   <span>{u.oldStatus ? `${statusLabel(u.oldStatus)} to ` : ""}{statusLabel(u.newStatus)}{u.note ? `: ${u.note}` : ""}</span>
-                  <span className="small muted">{u.createdAt.toISOString().slice(0, 10)}, by {u.by}</span>
+                  <span className="small muted">{formatDate(u.createdAt)}, by {u.by}</span>
                 </li>
               ))}
             </ul>
@@ -76,10 +80,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ lga: s
           <ReportForm projectId={p.id} />
         </div>
 
-        <aside className="grid gap-4 content-start">
+        <aside className="grid gap-4 content-start order-first md:order-none">
           <SourceStamp id={p.id} source={p.source} sourceUrl={p.sourceUrl} lastVerified={p.lastVerified} />
           {p.lat != null && p.lng != null ? (
-            <ProjectMap points={[{ id: p.id, name: p.name, lat: p.lat, lng: p.lng, status: p.status, href: `/${lga}/projects/${p.id}` }]} center={[p.lat, p.lng]} zoom={14} height={240} />
+            <details className="grid gap-2">
+              <summary className="small" style={{ cursor: "pointer" }}>Show on the map</summary>
+              <ProjectMap points={[{ id: p.id, name: p.name, lat: p.lat, lng: p.lng, status: p.status, href: `/${lga}/projects/${p.id}` }]} center={[p.lat, p.lng]} zoom={14} height={240} legend={false} />
+              <a className="small" href={`https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}#map=16/${p.lat}/${p.lng}`} rel="noopener">Open in OpenStreetMap</a>
+            </details>
           ) : null}
         </aside>
       </section>

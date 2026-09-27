@@ -5,15 +5,26 @@ import { getLga, listAssets, listProfile, listProjects, listServices } from "@/l
  * Open data. GET /api/{lga}/open/projects.json | projects.csv | assets.json | assets.csv |
  * services.json | investment.json. Approved records only, with source and last-verified fields.
  */
-function toCsv(rows: Record<string, unknown>[]): string {
-  if (!rows.length) return "";
-  const cols = Object.keys(rows[0]);
+const LICENCE = "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Attribute the LGA and this portal.";
+
+function toCsv(rows: Record<string, unknown>[], fallbackCols: string[]): string {
+  const cols = rows.length ? Object.keys(rows[0]) : fallbackCols;
   const esc = (v: unknown) => {
-    const t = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
-    return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    let t =
+      v == null ? "" : v instanceof Date ? v.toISOString() : typeof v === "object" ? JSON.stringify(v) : String(v);
+    // A cell starting with = + - @ would run as a formula in Excel; neutralise it.
+    if (/^[=+\-@\t\r]/.test(t)) t = `'${t}`;
+    return /[",\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
   };
-  return [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
+  return [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\r\n") + "\r\n";
 }
+
+const COLUMNS: Record<string, string[]> = {
+  projects: ["id", "lgaId", "name", "type", "ward", "lat", "lng", "sponsor", "budgetYear", "budgetLine", "amountNgn", "contractor", "startDate", "expectedCompletion", "status", "statusNote", "lastVerified", "source", "sourceUrl", "evidence", "updatedAt"],
+  assets: ["id", "lgaId", "name", "type", "ward", "lat", "lng", "condition", "lastInspected", "notes", "lastVerified", "source", "sourceUrl", "updatedAt"],
+  services: ["id", "lgaId", "name", "category", "summary", "eligibility", "documents", "steps", "office", "role", "contact", "turnaround", "lastVerified", "source", "sourceUrl", "updatedAt"],
+  investment: ["id", "lgaId", "section", "title", "body", "lastVerified", "source", "sourceUrl", "updatedAt"],
+};
 
 /** Drops the internal approval flag; every row served here is approved by definition. */
 function publicRows<T extends { approval: string }>(rows: T[]): Record<string, unknown>[] {
@@ -27,7 +38,9 @@ function publicRows<T extends { approval: string }>(rows: T[]): Record<string, u
 export async function GET(_req: Request, ctx: { params: Promise<{ lga: string; file: string }> }) {
   const { lga, file } = await ctx.params;
   if (!(await getLga(lga))) return NextResponse.json({ error: "Unknown LGA" }, { status: 404 });
-  const [name, ext] = file.split(".");
+  const m = /^([a-z]+)\.(json|csv)$/.exec(file);
+  if (!m) return NextResponse.json({ error: "Unknown dataset. Use <name>.json or <name>.csv." }, { status: 404 });
+  const [, name, ext] = m;
   let rows: Record<string, unknown>[];
   switch (name) {
     case "projects":
@@ -47,7 +60,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ lga: string; f
   }
   const headers = { "Cache-Control": "public, max-age=300", "Access-Control-Allow-Origin": "*" };
   if (ext === "csv") {
-    return new NextResponse(toCsv(rows), { headers: { ...headers, "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${lga}-${name}.csv"` } });
+    return new NextResponse(toCsv(rows, COLUMNS[name] ?? []), { headers: { ...headers, "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${lga}-${name}.csv"` } });
   }
-  return NextResponse.json({ lga, dataset: name, generated: new Date().toISOString(), licence: "Open data. Attribute the LGA and this portal.", rows }, { headers });
+  return NextResponse.json({ lga, dataset: name, generated: new Date().toISOString(), licence: LICENCE, rows }, { headers });
 }

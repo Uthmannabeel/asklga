@@ -19,7 +19,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ lga: 
       </section>
       <section className="grid gap-6 md:grid-cols-[1fr_20rem]">
         <div className="measure grid gap-3">{d.body.split(/\n\s*\n/).map((para, i) => <p key={i}>{para}</p>)}</div>
-        <aside className="content-start"><SourceStamp id={d.id} source={d.source} sourceUrl={d.sourceUrl} lastVerified={d.reviewBy ? d.createdAt.toISOString().slice(0, 10) : null} /></aside>
+        <aside className="content-start order-first md:order-none"><SourceStamp id={d.id} source={d.source} sourceUrl={d.sourceUrl} lastVerified={d.createdAt.toISOString()} dateLabel="Added" /></aside>
       </section>
     </LgaShell>
   );

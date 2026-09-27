@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { LgaShell } from "@/components/LgaShell";
 import { AskBox } from "@/components/AskBox";
 import { StatusMark } from "@/components/StatusMark";
+import { formatDate } from "@/lib/format";
 import { getLga, listProjects, listServices } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -34,12 +35,13 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
       <section className="grid gap-6 md:grid-cols-2">
         <div className="grid gap-2">
           <h2>Projects on the ground</h2>
+          {active.length === 0 ? <p className="small muted">No projects in progress are published yet.</p> : null}
           <ul className="register">
             {active.map((p) => (
               <li key={p.id} className="register-row">
                 <Link href={`/${lga}/projects/${p.id}`}>{p.name}</Link>
                 <span className="small">
-                  <StatusMark status={p.status} /> <span className="muted">{p.ward ?? ""}{p.lastVerified ? `, verified ${p.lastVerified}` : ""}</span>
+                  <StatusMark status={p.status} /> <span className="muted">{p.ward ?? ""}{p.lastVerified ? `, verified ${formatDate(p.lastVerified)}` : ""}</span>
                 </span>
               </li>
             ))}
@@ -48,6 +50,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
         </div>
         <div className="grid gap-2">
           <h2>Services</h2>
+          {services.length === 0 ? <p className="small muted">No services are published yet.</p> : null}
           <ul className="register">
             {services.slice(0, 6).map((sv) => (
               <li key={sv.id} className="register-row">

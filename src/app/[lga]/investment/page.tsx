@@ -20,13 +20,14 @@ export default async function InvestmentPage({ params }: { params: Promise<{ lga
       </section>
       <AskBox lgaId={lga} audience="investor" compact />
       <section className="grid gap-8">
+        {sections.length === 0 ? <p className="muted">The investment profile has not been published yet. When the LGA and the state investment agency approve it, each section appears here with its source.</p> : null}
         {sections.map((sec) => (
           <article key={sec.id} id={sec.id} className="grid gap-3 md:grid-cols-[1fr_20rem] md:gap-6">
             <div className="grid gap-2 measure">
               <h2>{sec.title}</h2>
               {sec.body.split(/\n\s*\n/).map((para, i) => <p key={i}>{para}</p>)}
             </div>
-            <aside className="content-start"><SourceStamp id={sec.id} source={sec.source} sourceUrl={sec.sourceUrl} lastVerified={sec.lastVerified} /></aside>
+            <aside className="content-start"><SourceStamp compact id={sec.id} source={sec.source} sourceUrl={sec.sourceUrl} lastVerified={sec.lastVerified} /></aside>
           </article>
         ))}
       </section>

@@ -41,7 +41,7 @@ export default async function ServicePage({ params }: { params: Promise<{ lga: s
             </tbody>
           </table>
         </div>
-        <aside className="content-start">
+        <aside className="content-start order-first md:order-none">
           <SourceStamp id={s.id} source={s.source} sourceUrl={s.sourceUrl} lastVerified={s.lastVerified} />
         </aside>
       </section>

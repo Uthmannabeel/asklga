@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LgaShell } from "@/components/LgaShell";
+import { SourceStamp } from "@/components/SourceStamp";
 import { listServices } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,9 @@ export default async function ServicesPage({ params }: { params: Promise<{ lga: 
         <h1>Service directory</h1>
         <p className="measure">What the LGA does for residents and businesses, with the steps, the documents to bring, the office and who is responsible.</p>
       </section>
+      {services.length === 0 ? (
+        <p className="muted">No services have been published yet. When the LGA approves its service directory, each service appears here with its steps and office.</p>
+      ) : null}
       {categories.map((cat) => (
         <section key={cat} className="grid gap-2">
           <h2>{cat}</h2>
@@ -25,6 +29,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ lga: 
                 <Link href={`/${lga}/services/${s.id}`} className="text-lg">{s.name}</Link>
                 {s.summary ? <span className="small">{s.summary}</span> : null}
                 <span className="small muted">{s.office ?? ""}{s.turnaround ? `. ${s.turnaround}.` : ""}</span>
+                <SourceStamp compact id={s.id} source={s.source} sourceUrl={s.sourceUrl} lastVerified={s.lastVerified} />
               </li>
             ))}
           </ul>

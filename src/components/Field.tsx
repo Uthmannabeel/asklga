@@ -1,11 +1,14 @@
 /** Small form helpers for the staff workspace. */
-export function Field({ label, name, value, type = "text", hint, required, placeholder, className }: { label: string; name: string; value?: string | number | null; type?: string; hint?: string; required?: boolean; placeholder?: string; className?: string }) {
-  const id = `f-${name}`;
+export function Field({ label, name, value, type = "text", hint, required, placeholder, className, step, idPrefix }: { label: string; name: string; value?: string | number | null; type?: string; hint?: string; required?: boolean; placeholder?: string; className?: string; step?: string; idPrefix?: string }) {
+  const id = `${idPrefix ?? "f"}-${name}`;
+  const hintId = hint ? `${id}-hint` : undefined;
+  // Number inputs default to whole-number steps, which rejects coordinates like 4.855.
+  const stepAttr = step ?? (type === "number" ? "any" : undefined);
   return (
     <div className={`grid gap-1 ${className ?? ""}`}>
       <label htmlFor={id} className="small">{label}{required ? " (required)" : ""}</label>
-      <input id={id} name={name} type={type} defaultValue={value ?? ""} required={required} placeholder={placeholder} />
-      {hint ? <span className="small muted">{hint}</span> : null}
+      <input id={id} name={name} type={type} defaultValue={value ?? ""} required={required} placeholder={placeholder} step={stepAttr} aria-describedby={hintId} />
+      {hint ? <span id={hintId} className="small muted">{hint}</span> : null}
     </div>
   );
 }

@@ -15,7 +15,8 @@ export default async function OpenDataPage({ params }: { params: Promise<{ lga: 
     <LgaShell lgaId={lga}>
       <section className="grid gap-2 measure">
         <h1>Open data</h1>
-        <p>Every approved register is downloadable and has a stable address. Journalists, researchers and other civic platforms may reuse it with attribution to the LGA and this portal.</p>
+        <p>Every approved register is downloadable and has a stable address. Journalists, researchers and other civic platforms may reuse it under the <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">Creative Commons Attribution 4.0 licence (CC BY 4.0)</a>: credit the LGA and this portal, and say if you changed the data.</p>
+        <p className="small muted">Each dataset carries its source, approval and last-verified fields per record. The JSON response includes the licence text and the generation time. Rows are approved records only; draft records are never included.</p>
       </section>
       <table className="max-w-2xl">
         <thead><tr><th>Dataset</th><th>JSON</th><th>CSV</th></tr></thead>

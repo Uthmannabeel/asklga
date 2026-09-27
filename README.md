@@ -23,7 +23,7 @@ Staff workspace (`/admin`, passcode sign-in)
 
 Answer engine (`src/lib/ask.ts`)
 - PII scrubbed before logging or any model call.
-- Switchable model provider (`ASKLGA_PROVIDER=gemini|anthropic`): Gemini (`gemini-3.8-flash` by default, called over REST, free tier is enough for a pilot) or Claude (`claude-opus-5`). Both return the same structured output: language, answer, citations, escalate, disclaimer.
+- Switchable model provider (`ASKLGA_PROVIDER=gemini|anthropic`): Gemini (`gemini-3.5-flash-lite` by default, called over REST; on a free key the larger Flash models are capped at about 20 requests a day each, so enable billing before switching up) or Claude (`claude-opus-5`). Both return the same structured output: language, answer, citations, escalate, disclaimer.
 - The LGA's approved registers are sent as a system block (cached on Anthropic); document passages come from Postgres full-text search.
 - Post-checks: citations must be real approved records; an answer without a valid citation becomes a refusal; any figure of four or more digits must appear in a cited record or the answer is withheld and the question logged as a gap.
 
@@ -37,7 +37,18 @@ npm run dev
 
 Open http://localhost:3000. With no `DATABASE_URL`, an embedded Postgres (PGlite) is created under `data/pglite` and seeded with demo records for Obio/Akpor LGA (every demo record says so in its source field, and the portal shows a demo banner).
 
-Production: set `DATABASE_URL` to a Postgres hosted in Nigeria, set `AUTO_SEED=false`, and enter real records through the staff workspace or a migration.
+Production: set `DATABASE_URL` to a Postgres hosted in Nigeria (demo records are never seeded when it is set), a long `ADMIN_PASSCODE`, a random `SESSION_SECRET`, `NEXT_PUBLIC_BASE_URL`, and the model key. Ship `src/db/migrations` with the build (it is traced automatically for standalone output). Enter real records through the staff workspace or a migration.
+
+## Safety and limits
+
+- **Public answers are budgeted.** Six questions a minute and sixty a day per connection, two thousand a day per LGA (`ASK_RATE_*`). Ticket, report, enquiry and feedback posts are limited to five or twenty a minute per connection. Buckets are in memory; a multi-server deployment should move them to Postgres or Redis.
+- **Sign-in is throttled** to five attempts a minute per connection, the placeholder passcode is refused, and every workspace page is gated by middleware on every request, not only by the layout.
+- **Sessions expire** after twelve hours server-side; the cookie is signed with `SESSION_SECRET` and is `Secure` in production.
+- **Ratings and flags are bound to the answer** they belong to through a token returned by `/api/ask`, so they cannot be set on someone else's question.
+- **Instruction-like questions are refused** before the model is called, in addition to the citation and figure checks. Repeats of an unanswered question do not add duplicate rows to the data-gap queue.
+- **Links are scheme-checked** (http/https only) everywhere a resident or officer can enter one, and CSV cells that would run as spreadsheet formulas are neutralised.
+- **Headers:** every page is `frame-ancestors 'none'` except `/{lga}/embed`, which any site may frame through the widget; `nosniff` and a strict referrer policy are set.
+- **Privacy:** `/privacy` explains what is stored under the NDPA 2023; `/about-answers` explains the five checks behind every answer.
 
 If `npm install` stalls behind a slow or intercepting proxy, `scripts/fetch-pkg.mjs` downloads and extracts packages directly:
 
@@ -48,14 +59,17 @@ node --use-system-ca scripts/fetch-pkg.mjs zod@^4 drizzle-orm@0.45.3 @electric-s
 ## Evaluate
 
 ```
-npx tsx scripts/eval.ts
+npm run eval -- http://localhost:3000 <staff name> <ADMIN_PASSCODE>   # server must be running; the last two arguments enable the internal-scope case
 ```
 
 Runs `eval/questions.json` (20 cases: five languages, investor and staff audiences, out-of-scope and PII cases, one internal-document case) through the engine and writes a scored result to `eval/results/`. The build plan's launch bar is zero invented figures and at least 95 percent on the rubric.
 
 ## What is prototype-grade
 
-- Staff sign-in is one shared passcode. Replace with per-officer accounts and roles before real use.
+- Staff sign-in is one shared passcode and a self-declared name. Replace with per-officer accounts and roles before real use; until then, anyone with the passcode is an administrator of every LGA on the server.
+- Internal-scope questions send passages from internal documents to the model provider. The build plan's rule is public content only for foreign inference; keep the private index empty, or get the partner's written sign-off, until a Nigerian-hosted model is configured.
+- Escalation has no SMS or email alert yet; an officer must open the workspace to see new tickets.
+- The interface text is English only. Answers and refusals come back in the question's language, but a language switcher for the pages has not been built.
 - Voice input uses the browser's speech recognition. Hausa, Yoruba and Igbo recognition is experimental; the plan's speech-to-text bake-off has not been run.
 - Refusal messages in Hausa, Yoruba and Igbo have not had native-speaker review.
 - Photo evidence is by link only; there is no upload store yet.

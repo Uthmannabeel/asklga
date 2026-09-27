@@ -14,6 +14,7 @@ export default async function AdminProjects({ params }: { params: Promise<{ lga:
         <h1>Projects</h1>
         <Link href={`/admin/${lga}/projects/new`} className="btn btn-sm no-underline">Add a project</Link>
       </div>
+      <div className="table-scroll">
       <table>
         <thead><tr><th>ID</th><th>Project</th><th>Status</th><th>Amount</th><th>Approval</th><th>Verified</th></tr></thead>
         <tbody>
@@ -29,6 +30,7 @@ export default async function AdminProjects({ params }: { params: Promise<{ lga:
           ))}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }
