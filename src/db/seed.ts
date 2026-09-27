@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import * as s from "./schema";
 
 /**
@@ -28,21 +28,27 @@ export function chunkText(body: string, target = 700): string[] {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function seedIfEmpty(db: any) {
-  const existing = await db.select({ id: s.lgas.id }).from(s.lgas).limit(1);
+  // The demo is keyed on the demo LGA having records, not on the lgas table being empty: the
+  // national directory fills that table with all 774 LGAs on every start.
+  const existing = await db.select({ id: s.projects.id }).from(s.projects).where(eq(s.projects.lgaId, "obio-akpor")).limit(1);
   if (existing.length > 0) return;
 
-  await db.insert(s.lgas).values({
+  const demoLga = {
     id: "obio-akpor",
     name: "Obio/Akpor",
     state: "Rivers",
+    zone: "South South",
     headquarters: "Rumuodomaya",
     population: 464789,
+    populationYear: 2006,
+    populationSource: "National Population Commission, 2006 census",
     lat: 4.855,
     lng: 6.99,
     intro:
       "Obio/Akpor is one of the two local government areas that make up the Port Harcourt metropolis. This portal answers questions about its services, projects, public assets and investment opportunities from approved records only.",
     demo: true,
-  });
+  };
+  await db.insert(s.lgas).values(demoLga).onConflictDoUpdate({ target: s.lgas.id, set: { ...demoLga, id: undefined } });
 
   const P = (
     n: number,
