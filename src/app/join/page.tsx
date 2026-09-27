@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata = { title: "For LGA officials" };
 
@@ -7,7 +8,7 @@ export default function JoinPage() {
   return (
     <>
       <SiteHeader back="/join" />
-      <main id="main" className="mx-auto max-w-5xl px-4 py-8 grid gap-6 measure">
+      <main id="main" className="wrap py-12 grid gap-6 measure">
         <h1>For LGA officials</h1>
         <p className="text-lg">Your local government already has a page here. Joining means your staff publish what the LGA does, built and owns, and residents get answers from your records rather than from rumour. It costs nothing and the records stay yours.</p>
         <h2>What joining takes</h2>
@@ -32,6 +33,7 @@ export default function JoinPage() {
         <p>Write to the portal administrator with the LGA name, the data owner&apos;s name and role, and an official email address for the first account. The address is on the portal&apos;s repository page. States can onboard all their LGAs at once and embed the ask box on the state website.</p>
         <p className="small muted"><Link href="/standard">Read the LGA Record Standard</Link> · <Link href="/">Back to the directory</Link></p>
       </main>
+      <SiteFooter />
     </>
   );
 }

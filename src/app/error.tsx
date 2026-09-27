@@ -9,7 +9,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
     console.error(error);
   }, [error]);
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 grid gap-4 measure">
+    <main className="wrap py-16 grid gap-4 measure">
       <h1>Something went wrong on our side</h1>
       <p>The page could not be shown. Nothing you typed was lost from the LGA&apos;s records. You can try again, or go back to the start.</p>
       {error.digest ? <p className="small muted">Reference: {error.digest}</p> : null}

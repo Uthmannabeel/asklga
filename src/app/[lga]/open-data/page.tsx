@@ -34,7 +34,7 @@ export default async function OpenDataPage({ params }: { params: Promise<{ lga: 
       <section className="grid gap-2 measure">
         <h2>Put the ask box on your own website</h2>
         <p>States and LGAs that already have a website can add the same ask box with one line. It loads in a frame, so nothing else on the page changes.</p>
-        <pre className="small" style={{ background: "var(--field)", padding: "0.75rem", borderRadius: 2, overflowX: "auto" }}>
+        <pre className="small" style={{ background: "var(--canvas)", padding: "0.75rem", borderRadius: 2, overflowX: "auto" }}>
           {`<script src="${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/widget.js" data-lga="${lga}" async></script>`}
         </pre>
       </section>

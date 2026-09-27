@@ -32,13 +32,15 @@ export async function directory(): Promise<DirectoryRow[]> {
     .sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));
 }
 
-export async function nationalSummary() {
-  const rows = await directory();
+/** Pass the directory rows when the caller already has them, so the directory is only read once. */
+export async function nationalSummary(given?: DirectoryRow[]) {
+  const rows = given ?? (await directory());
   const joined = rows.filter((r) => r.records > 0);
   const [alloc] = await (await getDb()).select({ periods: sql<number>`count(distinct period)`, lgas: sql<number>`count(distinct lga_id)`, latest: sql<string | null>`max(period)` }).from(s.allocations);
   return {
     lgas: rows.length,
-    states: new Set(rows.map((r) => r.state)).size,
+    // States only: the FCT is counted separately ("36 states and the FCT").
+    states: new Set(rows.map((r) => r.state).filter((st) => st !== "Federal Capital Territory")).size,
     joined: joined.length,
     records: rows.reduce((n, r) => n + r.records, 0),
     questions: rows.reduce((n, r) => n + r.questions, 0),

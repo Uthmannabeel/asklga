@@ -1,53 +1,85 @@
 import Link from "next/link";
 import { LANG_NAMES, REVIEWED, UI_LANGS, dict, uiLang, type UiLang } from "@/lib/i18n";
+import { Mark } from "./Wordmark";
+import { NavLinks } from "./NavLinks";
+
+const NATIONAL = [
+  { href: "/", label: "Find your LGA", exact: true },
+  { href: "/about-answers", label: "How answers work" },
+  { href: "/scoreboard", label: "Scoreboard" },
+  { href: "/insights", label: "What people ask" },
+  { href: "/standard", label: "Open standard" },
+  { href: "/join", label: "For LGA officials" },
+];
 
 export async function SiteHeader({ lga, demo, back }: { lga?: { id: string; name: string; state: string }; demo?: boolean; back?: string }) {
   const lang: UiLang = await uiLang();
   const t = dict(lang);
   const returnTo = back ?? (lga ? `/${lga.id}` : "/");
+  const stateLabel = lga ? (lga.state === "Federal Capital Territory" ? lga.state : `${lga.state} State`) : "";
   return (
     <>
       <a href="#main" className="skip-link">{t.skip}</a>
-      {demo ? <div className="demo-banner" role="note">{t.demoBanner}</div> : null}
-      {!REVIEWED[lang] ? <div className="demo-banner" role="note" lang="en">{t.pendingReview}</div> : null}
-      <header className="border-b border-rule">
-        <div className="mx-auto max-w-5xl px-4 py-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-          <Link href="/" className="no-underline text-ink font-bold nav-link">AskLGA</Link>
+      {demo ? <div className="demo-banner" role="note"><div className="wrap">{t.demoBanner}</div></div> : null}
+      {!REVIEWED[lang] ? <div className="demo-banner" role="note" lang="en"><div className="wrap">{t.pendingReview}</div></div> : null}
+      <header className="site-header">
+        <div className="wrap site-header-row">
+          <Link href="/" className="wordmark" aria-label="AskLGA home">
+            <Mark />
+            <span>AskLGA</span>
+          </Link>
           {lga ? (
-            <nav aria-label="Sections" className="flex flex-wrap gap-x-5 gap-y-0 small">
-              <Link href={`/${lga.id}`} className="nav-link">{t.nav.ask}</Link>
-              <Link href={`/${lga.id}/projects`} className="nav-link">{t.nav.projects}</Link>
-              <Link href={`/${lga.id}/assets`} className="nav-link">{t.nav.assets}</Link>
-              <Link href={`/${lga.id}/services`} className="nav-link">{t.nav.services}</Link>
-              <Link href={`/${lga.id}/money`} className="nav-link">{t.nav.money}</Link>
-              <Link href={`/${lga.id}/investment`} className="nav-link">{t.nav.investment}</Link>
-              <Link href={`/${lga.id}/documents`} className="nav-link">{t.nav.documents}</Link>
-              <Link href={`/${lga.id}/open-data`} className="nav-link">{t.nav.openData}</Link>
-            </nav>
+            <p className="small muted" style={{ minWidth: 0 }}>
+              <span aria-hidden="true">/ </span>
+              <Link href={`/${lga.id}`} className="text-ink no-underline font-bold">{lga.name}</Link>
+              <span className="hidden sm:inline">, {stateLabel}</span>
+            </p>
           ) : (
-            <nav aria-label="National" className="flex flex-wrap gap-x-5 gap-y-0 small">
-              <Link href="/" className="nav-link">Directory</Link>
-              <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
-              <Link href="/insights" className="nav-link">Insights</Link>
-              <Link href="/standard" className="nav-link">Standard</Link>
-              <Link href="/join" className="nav-link">Join</Link>
-            </nav>
+            <NavLinks items={NATIONAL} className="primary-nav" label="Main" />
           )}
-          <nav aria-label={t.language} className="ml-auto flex flex-wrap gap-x-3 small">
-            {UI_LANGS.map((code) => (
-              <a
-                key={code}
-                href={`/api/lang?set=${code}&back=${encodeURIComponent(returnTo)}`}
-                className={`nav-link ${code === lang ? "font-bold" : ""}`}
-                aria-current={code === lang ? "true" : undefined}
-                lang={code === "en" ? "en" : code}
-              >
-                {LANG_NAMES[code]}
-              </a>
-            ))}
-          </nav>
+          <details className="lang-menu">
+            <summary>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.3" /><path d="M1.5 8h13M8 1.5c2 2 2.8 4.2 2.8 6.5S10 12.5 8 14.5M8 1.5C6 3.5 5.2 5.7 5.2 8S6 12.5 8 14.5" fill="none" stroke="currentColor" strokeWidth="1.3" /></svg>
+              <span className="sr-only">{t.language}: </span>
+              <span>{LANG_NAMES[lang]}</span>
+              <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+            </summary>
+            <ul>
+              {UI_LANGS.map((code) => (
+                <li key={code}>
+                  <a
+                    href={`/api/lang?set=${code}&back=${encodeURIComponent(returnTo)}`}
+                    aria-current={code === lang ? "true" : undefined}
+                    lang={code === "en" ? "en" : code}
+                  >
+                    {LANG_NAMES[code]}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       </header>
+      {lga ? (
+        <div className="lga-bar">
+          <div className="wrap">
+            <NavLinks
+              className="lga-tabs"
+              label="Sections"
+              items={[
+                { href: `/${lga.id}`, label: t.nav.ask, exact: true },
+                { href: `/${lga.id}/services`, label: t.nav.services },
+                { href: `/${lga.id}/projects`, label: t.nav.projects },
+                { href: `/${lga.id}/assets`, label: t.nav.assets },
+                { href: `/${lga.id}/money`, label: t.nav.money },
+                { href: `/${lga.id}/investment`, label: t.nav.investment },
+                { href: `/${lga.id}/documents`, label: t.nav.documents },
+                { href: `/${lga.id}/open-data`, label: t.nav.openData },
+              ]}
+            />
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

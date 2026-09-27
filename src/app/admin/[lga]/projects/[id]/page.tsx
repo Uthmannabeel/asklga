@@ -27,7 +27,7 @@ export default async function AdminProject({ params }: { params: Promise<{ lga: 
       </section>
 
       {p ? (
-        <section className="grid gap-3 border border-rule p-4" style={{ borderRadius: 2, background: "var(--field)" }}>
+        <section className="grid gap-3 border border-rule p-4" style={{ borderRadius: 2, background: "var(--canvas)" }}>
           <h2>Update status from the field</h2>
           <form action={updateProjectStatus} className="grid gap-3 md:grid-cols-2">
             <input type="hidden" name="id" value={p.id} />

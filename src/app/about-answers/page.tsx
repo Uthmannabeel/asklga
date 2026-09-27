@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata = { title: "How answers are checked" };
 
@@ -7,7 +8,7 @@ export default function AboutAnswersPage() {
   return (
     <>
       <SiteHeader />
-      <main id="main" className="mx-auto max-w-5xl px-4 py-8 grid gap-6 measure">
+      <main id="main" className="wrap py-12 grid gap-6 measure">
         <h1>How answers are checked</h1>
         <p>
           Every answer on this portal comes from records the local government&apos;s data owner has approved for publication: the projects register, the public assets inventory, the service directory, the investment profile and the document library. The answer service cannot use anything else.
@@ -34,6 +35,7 @@ export default function AboutAnswersPage() {
         </p>
         <p className="small muted"><Link href="/">Back to the start</Link></p>
       </main>
+      <SiteFooter />
     </>
   );
 }

@@ -8,12 +8,12 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1e6b3c" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0c2a1c" };
 
-// Newsreader carries titles and answers; Atkinson Hyperlegible carries the interface.
+// Atkinson Hyperlegible Next carries everything; its Mono sibling carries record IDs and figures.
 // Loaded as a stylesheet with font-display swap so text renders before the fonts arrive.
 const FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap";
+  "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;0,800;1,400&family=Atkinson+Hyperlegible+Mono:wght@400;500;700&display=swap";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = await uiLang();

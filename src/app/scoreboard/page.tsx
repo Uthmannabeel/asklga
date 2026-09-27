@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { scoreboard } from "@/lib/national";
 import { formatDate } from "@/lib/format";
 
@@ -13,7 +14,7 @@ export default async function Scoreboard() {
   return (
     <>
       <SiteHeader back="/scoreboard" />
-      <main id="main" className="mx-auto max-w-5xl px-4 py-8 grid gap-6">
+      <main id="main" className="wrap py-12 grid gap-6">
         <section className="measure grid gap-3">
           <h1>Scoreboard</h1>
           <p>Every LGA that has published records or received questions, with what can be measured about it. Accuracy is the share of a fixed set of test questions the answer service got right against that LGA&apos;s records, re-run after changes; <Link href="/about-answers">how answers are checked</Link>.</p>
@@ -40,6 +41,7 @@ export default async function Scoreboard() {
         )}
         <p className="small muted measure">&quot;Answered&quot; means answered from approved records; a refusal is counted as not answered even when refusing was correct. Open gaps are distinct questions the LGA has not yet added a record for. Demo LGAs carry illustrative records and are marked.</p>
       </main>
+      <SiteFooter />
     </>
   );
 }

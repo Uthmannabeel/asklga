@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata = { title: "Privacy" };
 
@@ -11,7 +12,7 @@ export default function PrivacyPage() {
   return (
     <>
       <SiteHeader />
-      <main id="main" className="mx-auto max-w-5xl px-4 py-8 grid gap-6 measure">
+      <main id="main" className="wrap py-12 grid gap-6 measure">
         <h1>Privacy</h1>
         <p>This notice explains what the portal stores when you use it, why, and for how long. It follows the Nigeria Data Protection Act 2023.</p>
         <h2>Questions you ask</h2>
@@ -40,6 +41,7 @@ export default function PrivacyPage() {
         </p>
         <p className="small muted"><Link href="/">Back to the start</Link></p>
       </main>
+      <SiteFooter />
     </>
   );
 }

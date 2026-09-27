@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <>
       <a href="#main" className="skip-link">Skip to content</a>
-      <header className="border-b border-rule" style={{ background: "var(--field)" }}>
+      <header className="border-b border-rule" style={{ background: "var(--canvas)" }}>
         <div className="mx-auto max-w-6xl px-4 py-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
           <Link href="/" className="no-underline text-ink font-bold nav-link">AskLGA</Link>
           <span className="small muted">Staff workspace</span>

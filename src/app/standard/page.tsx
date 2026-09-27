@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata = { title: "The LGA Record Standard" };
 
@@ -90,7 +91,7 @@ export default function StandardPage() {
   return (
     <>
       <SiteHeader back="/standard" />
-      <main id="main" className="mx-auto max-w-5xl px-4 py-8 grid gap-8">
+      <main id="main" className="wrap py-12 grid gap-8">
         <section className="measure grid gap-3">
           <h1>The LGA Record Standard</h1>
           <p className="text-lg">One way for every local government in Nigeria to publish what it does, what it built, what it owns and what it received, so that residents, journalists, investors and other platforms can read it, reuse it and check it.</p>
@@ -139,6 +140,7 @@ export default function StandardPage() {
           <p className="small muted"><Link href="/">Back to the directory</Link></p>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }
