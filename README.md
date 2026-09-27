@@ -39,10 +39,33 @@ Open http://localhost:3000. With no `DATABASE_URL`, an embedded Postgres (PGlite
 
 Production: set `DATABASE_URL` to a Postgres hosted in Nigeria (demo records are never seeded when it is set), a long `ADMIN_PASSCODE`, a random `SESSION_SECRET`, `NEXT_PUBLIC_BASE_URL`, and the model key. Ship `src/db/migrations` with the build (it is traced automatically for standalone output). Enter real records through the staff workspace or a migration.
 
+## Staff accounts
+
+- **First run:** sign in at `/admin` with `ADMIN_PASSCODE`, open Accounts, create the first administrator. The passcode then stops working. Or, with the server stopped: `npm run create-admin -- you@lga.gov.ng "Your Name" <password>`.
+- **Roles:** admin manages accounts and everything below; editor changes records and closes gaps, flags and tickets; viewer reads the workspace and uses the internal search. An account bound to an LGA sees only that LGA; a server administrator sees all.
+- Officers change their own password under Account. Admins reset passwords and disable accounts under Accounts; the last active admin cannot be removed.
+
+## Internal documents and the model
+
+`ASKLGA_INTERNAL_SCOPE=search` (the default) keeps the build plan's rule that a foreign model provider only sees public content: in the staff "Ask" page, internal documents are matched by keyword on the server and quoted directly, with no model call. `model` sends internal passages to the provider like public content; set it only with the partner's written sign-off or a Nigerian-hosted model.
+
+## Alerts and connected sources
+
+- New tickets, flagged answers and investor enquiries can be pushed by webhook, email (Resend) or SMS (Termii): see `.env.example`. Without a channel they only appear in the workspace, and the Tickets page says so.
+- Documents can be imported from a web address (a state budget page, a Tracka project page) as drafts, and re-fetched later; a changed page goes back to draft for re-approval. PDF import is not available yet.
+
+## Languages
+
+The answer engine replies in the question's language. The page chrome (navigation, ask box, stamps, footer, home headings) is switchable between English, Pidgin, Hausa, Yoruba and Igbo from the header. English is the reviewed source; the other four are drafts and every page in them shows a "draft awaiting native-speaker review" line until `REVIEWED` in `src/lib/i18n.ts` is flipped after review.
+
+## Deploy
+
+`docker compose up --build` runs the portal with its own Postgres (see `docker-compose.yml`; copy `.env.example` to `.env` first). The image is a Next standalone build; put TLS in front and set `NEXT_PUBLIC_BASE_URL` to the https address so the session cookie is marked Secure. CI (`.github/workflows/ci.yml`) typechecks, lints, builds, boots the app and checks the key routes, then builds the container image. Licence: MIT.
+
 ## Safety and limits
 
 - **Public answers are budgeted.** Six questions a minute and sixty a day per connection, two thousand a day per LGA (`ASK_RATE_*`). Ticket, report, enquiry and feedback posts are limited to five or twenty a minute per connection. Buckets are in memory; a multi-server deployment should move them to Postgres or Redis.
-- **Sign-in is throttled** to five attempts a minute per connection, the placeholder passcode is refused, and every workspace page is gated by middleware on every request, not only by the layout.
+- **Sign-in is throttled** to five attempts a minute per connection, the placeholder passcode is refused, and every workspace page is gated by middleware on every request, not only by the layout. Every action re-checks the account's role and LGA.
 - **Sessions expire** after twelve hours server-side; the cookie is signed with `SESSION_SECRET` and is `Secure` in production.
 - **Ratings and flags are bound to the answer** they belong to through a token returned by `/api/ask`, so they cannot be set on someone else's question.
 - **Instruction-like questions are refused** before the model is called, in addition to the citation and figure checks. Repeats of an unanswered question do not add duplicate rows to the data-gap queue.
@@ -62,14 +85,14 @@ node --use-system-ca scripts/fetch-pkg.mjs zod@^4 drizzle-orm@0.45.3 @electric-s
 npm run eval -- http://localhost:3000 <staff name> <ADMIN_PASSCODE>   # server must be running; the last two arguments enable the internal-scope case
 ```
 
-Runs `eval/questions.json` (20 cases: five languages, investor and staff audiences, out-of-scope and PII cases, one internal-document case) through the engine and writes a scored result to `eval/results/`. The build plan's launch bar is zero invented figures and at least 95 percent on the rubric.
+Runs `eval/questions.json` (60 cases: 34 resident and 8 investor questions across English, Pidgin, Hausa, Yoruba and Igbo, 12 refusal and safety cases including an injection attempt and grouped identity numbers, and one internal-document case) through the engine and writes a scored result to `eval/results/`. The build plan's launch bar is zero invented figures and at least 95 percent on the rubric. Pass an account's email and password (or, on a fresh server, a name and the passcode) as the last two arguments.
 
 ## What is prototype-grade
 
-- Staff sign-in is one shared passcode and a self-declared name. Replace with per-officer accounts and roles before real use; until then, anyone with the passcode is an administrator of every LGA on the server.
-- Internal-scope questions send passages from internal documents to the model provider. The build plan's rule is public content only for foreign inference; keep the private index empty, or get the partner's written sign-off, until a Nigerian-hosted model is configured.
-- Escalation has no SMS or email alert yet; an officer must open the workspace to see new tickets.
-- The interface text is English only. Answers and refusals come back in the question's language, but a language switcher for the pages has not been built.
+- Accounts are email and password with roles; there is no single sign-on, two-factor or password-reset email yet. An admin resets passwords.
+- The Pidgin, Hausa, Yoruba and Igbo interface strings and refusal messages are drafts awaiting native-speaker review, and the pages say so.
+- Rate-limit buckets are in memory; a multi-server deployment should move them to Postgres or Redis.
+- Alerts are outbound only; there is no inbound SMS or WhatsApp channel.
 - Voice input uses the browser's speech recognition. Hausa, Yoruba and Igbo recognition is experimental; the plan's speech-to-text bake-off has not been run.
 - Refusal messages in Hausa, Yoruba and Igbo have not had native-speaker review.
 - Photo evidence is by link only; there is no upload store yet.

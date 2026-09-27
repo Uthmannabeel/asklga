@@ -27,21 +27,24 @@ async function create(): Promise<Db> {
   } else {
     const { PGlite } = await import("@electric-sql/pglite");
     const { drizzle } = await import("drizzle-orm/pglite");
-    const dir = path.join(process.cwd(), "data", "pglite");
-    fs.mkdirSync(dir, { recursive: true });
-    const client = new PGlite(dir);
+    const dataDir = path.join(process.cwd(), "data", "pglite");
+    fs.mkdirSync(dataDir, { recursive: true });
+    const client = new PGlite(dataDir);
     db = drizzle(client, { schema }) as unknown as Db;
   }
 
-  // The migration is read from disk so it stays plain SQL. next.config.ts lists it in
+  // Migrations are plain SQL files applied in name order on every start; each is idempotent
+  // (IF NOT EXISTS / ADD COLUMN IF NOT EXISTS). next.config.ts lists the folder in
   // outputFileTracingIncludes so a standalone/serverless build still ships it.
-  const migrationPath = path.join(process.cwd(), "src", "db", "migrations", "0000_init.sql");
-  if (!fs.existsSync(migrationPath)) {
-    throw new Error(`Database migration not found at ${migrationPath}. Deploy the src/db/migrations folder with the app.`);
+  const dir = path.join(process.cwd(), "src", "db", "migrations");
+  if (!fs.existsSync(dir)) {
+    throw new Error(`Database migrations not found at ${dir}. Deploy the src/db/migrations folder with the app.`);
   }
-  const migration = fs.readFileSync(migrationPath, "utf8");
-  for (const statement of migration.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
-    await db.execute(sql.raw(statement));
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
+    const migration = fs.readFileSync(path.join(dir, file), "utf8");
+    for (const statement of migration.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
+      await db.execute(sql.raw(statement));
+    }
   }
 
   // Demo records are seeded only into the embedded local database unless AUTO_SEED=true is set

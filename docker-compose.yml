@@ -1,0 +1,33 @@
+# Local or single-server deployment: the portal plus a Postgres it owns.
+# For a pilot, run this on a Nigerian-hosted VM (Galaxy Backbone or a Nigerian cloud region)
+# and put TLS in front (Caddy/nginx). Copy .env.example to .env and fill it in first.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: asklga
+      POSTGRES_USER: asklga
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U asklga -d asklga"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://asklga:${POSTGRES_PASSWORD:-change-this-password}@db:5432/asklga
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

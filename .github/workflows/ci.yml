@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run build
+        env:
+          ADMIN_PASSCODE: ci-only-passcode-not-secret
+          NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      # Boots the built app against the embedded database and checks the key routes respond.
+      - name: Smoke test
+        env:
+          ADMIN_PASSCODE: ci-only-passcode-not-secret
+          NEXT_PUBLIC_BASE_URL: http://localhost:3000
+        run: |
+          (npx next start -p 3000 > server.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/ >/dev/null && break; sleep 2; done
+          set -e
+          for p in / /obio-akpor /obio-akpor/projects /obio-akpor/services /about-answers /privacy /api/obio-akpor/open/projects.json; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:3000$p"); echo "$code $p"; [ "$code" = "200" ]
+          done
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/admin/obio-akpor/tickets); echo "$code /admin gate"; [ "$code" = "307" ]
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{"lgaId":"obio-akpor","question":"test"}' http://localhost:3000/api/ask); echo "$code /api/ask (no key -> 503)"; [ "$code" = "503" ]
+      - name: Build container image
+        run: docker build -t asklga:ci .

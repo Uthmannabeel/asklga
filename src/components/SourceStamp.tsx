@@ -1,18 +1,19 @@
 import { formatDate } from "@/lib/format";
+import { dict, uiLang } from "@/lib/i18n";
 
 /**
  * The source stamp: the one element allowed to be loud. Every public record carries it so a
  * reader always sees where a record came from, that the data owner approved it, and when it
  * was last confirmed. `compact` is the one-line form for list rows.
  */
-export function SourceStamp({
+export async function SourceStamp({
   id,
   source,
   sourceUrl,
   lastVerified,
   animate,
   compact,
-  dateLabel = "Last verified",
+  dateLabel,
 }: {
   id: string;
   source: string;
@@ -20,28 +21,30 @@ export function SourceStamp({
   lastVerified?: string | null;
   animate?: boolean;
   compact?: boolean;
-  dateLabel?: string;
+  dateLabel?: "added";
 }) {
+  const t = dict(await uiLang()).stamp;
+  const label = dateLabel === "added" ? t.added : t.lastVerified;
   const verified = Boolean(lastVerified);
   const link = sourceUrl && /^https?:\/\//i.test(sourceUrl) ? sourceUrl : null;
   if (compact) {
     return (
-      <span className="stamp stamp-compact" role="note" aria-label="Source of this record">
-        {verified ? <strong>Verified</strong> : <span style={{ color: "var(--caution)", fontWeight: 700 }}>Not yet verified</span>}
+      <span className="stamp stamp-compact" role="note" aria-label={t.source}>
+        {verified ? <strong>{t.verified}</strong> : <span style={{ color: "var(--caution)", fontWeight: 700 }}>{t.notVerified}</span>}
         {" · "}{link ? <a href={link} rel="noopener">{source}</a> : source}
-        {verified ? ` · ${dateLabel} ${formatDate(lastVerified)}` : ""}
+        {verified ? ` · ${label} ${formatDate(lastVerified)}` : ""}
       </span>
     );
   }
   return (
-    <div className={`stamp ${animate ? "stamp-in" : ""}`} role="note" aria-label="Source of this record">
+    <div className={`stamp ${animate ? "stamp-in" : ""}`} role="note" aria-label={t.source}>
       <div>
-        {verified ? <strong>Verified</strong> : <span style={{ color: "var(--caution)", fontWeight: 700 }}>Not yet verified</span>}
-        {" "}record {id}
+        {verified ? <strong>{t.verified}</strong> : <span style={{ color: "var(--caution)", fontWeight: 700 }}>{t.notVerified}</span>}
+        {" "}{t.record} {id}
       </div>
-      <div>Source: {link ? <a href={link} rel="noopener">{source}</a> : source}</div>
-      <div>Approved for publication by the LGA data owner</div>
-      <div>{verified ? `${dateLabel} ${formatDate(lastVerified)}` : "No verification date on file"}</div>
+      <div>{t.source}: {link ? <a href={link} rel="noopener">{source}</a> : source}</div>
+      <div>{t.approved}</div>
+      <div>{verified ? `${label} ${formatDate(lastVerified)}` : t.noDate}</div>
     </div>
   );
 }

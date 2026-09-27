@@ -4,16 +4,14 @@ import { NextResponse, type NextRequest } from "next/server";
  * Gate for the staff workspace. Runs on every request to /admin/<lga>/..., including the
  * client-side navigations that skip layout re-renders, so an expired or missing session can
  * never show a workspace page. Server actions and staff APIs keep their own checks.
- * Token format matches src/lib/auth.ts: "<name>.<issuedAtMs>.<hex hmac-sha256(secret, name|iat)>".
+ * Token format matches src/lib/auth.ts: "<subject>.<issuedAtMs>.<hex hmac-sha256(secret, subject|iat)>".
  */
 const COOKIE = "asklga_staff";
 const SESSION_MS = 12 * 3600 * 1000;
-const WEAK = new Set(["change-me", "changeme", "password", "admin", "asklga"]);
-
 async function verify(token: string | undefined): Promise<boolean> {
-  const passcode = (process.env.ADMIN_PASSCODE ?? "").trim();
-  if (!token || !passcode || WEAK.has(passcode.toLowerCase())) return false;
-  const secret = process.env.SESSION_SECRET?.trim() || passcode;
+  // Signature and age only; the page or action then loads the account and checks role and LGA.
+  const secret = process.env.SESSION_SECRET?.trim() || (process.env.ADMIN_PASSCODE ?? "").trim();
+  if (!token || !secret) return false;
   const parts = token.split(".");
   if (parts.length < 3) return false;
   const given = parts.pop() as string;

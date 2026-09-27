@@ -26,7 +26,7 @@ export default async function ProjectsPage({ params, searchParams }: { params: P
   const withEvidence = all.filter((p) => p.evidence.length > 0).length;
 
   return (
-    <LgaShell lgaId={lga}>
+    <LgaShell lgaId={lga} back={`/${lga}/projects`}>
       <section className="grid gap-2">
         <h1>Projects register</h1>
         <p className="measure">

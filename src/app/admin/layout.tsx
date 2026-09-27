@@ -1,35 +1,38 @@
 import Link from "next/link";
-import { staffName } from "@/lib/auth";
+import { currentStaff } from "@/lib/auth";
 import { listLgas } from "@/lib/queries";
 import { SignOutButton } from "./SignOutButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const name = await staffName();
-  const lgas = name ? await listLgas() : [];
+  const session = await currentStaff();
+  const lgas = session ? (await listLgas()).filter((l) => session.lgaId === null || l.id === session.lgaId) : [];
   return (
     <>
+      <a href="#main" className="skip-link">Skip to content</a>
       <header className="border-b border-rule" style={{ background: "var(--field)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-          <Link href="/" className="no-underline text-ink font-bold">AskLGA</Link>
+        <div className="mx-auto max-w-6xl px-4 py-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+          <Link href="/" className="no-underline text-ink font-bold nav-link">AskLGA</Link>
           <span className="small muted">Staff workspace</span>
-          {name ? (
-            <nav aria-label="Workspace" className="flex flex-wrap gap-x-5 gap-y-1 small">
+          {session ? (
+            <nav aria-label="Workspace" className="flex flex-wrap gap-x-5 gap-y-0 small">
               {lgas.map((l) => (
-                <Link key={l.id} href={`/admin/${l.id}`}>{l.name}</Link>
+                <Link key={l.id} href={`/admin/${l.id}`} className="nav-link">{l.name}</Link>
               ))}
+              {session.role === "admin" ? <Link href="/admin/users" className="nav-link">Accounts</Link> : null}
+              <Link href="/admin/account" className="nav-link">Account</Link>
             </nav>
           ) : null}
-          {name ? (
+          {session ? (
             <span className="ml-auto small flex items-center gap-3">
-              <span className="muted">Signed in as {name}</span>
+              <span className="muted">{session.name} · {session.role}</span>
               <SignOutButton />
             </span>
           ) : null}
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 grid gap-8">{children}</main>
+      <main id="main" className="mx-auto max-w-6xl px-4 py-6 grid gap-8">{children}</main>
     </>
   );
 }

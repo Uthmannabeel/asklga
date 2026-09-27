@@ -11,7 +11,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ lga: 
   const services = await listServices(lga);
   const categories = [...new Set(services.map((s) => s.category))];
   return (
-    <LgaShell lgaId={lga}>
+    <LgaShell lgaId={lga} back={`/${lga}/services`}>
       <section className="grid gap-2">
         <h1>Service directory</h1>
         <p className="measure">What the LGA does for residents and businesses, with the steps, the documents to bring, the office and who is responsible.</p>

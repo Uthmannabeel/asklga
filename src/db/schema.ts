@@ -146,6 +146,25 @@ export const documents = pgTable("documents", {
   approval: text("approval").notNull().default("draft"),
   reviewBy: text("review_by"), // ISO date after which the record counts as stale
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // Connected sources: when the body was imported from source_url, and a hash to detect change.
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }),
+  contentHash: text("content_hash"),
+  fetchNote: text("fetch_note"),
+});
+
+export type StaffRole = "admin" | "editor" | "viewer";
+
+/** Per-officer accounts. lga_id NULL means every LGA on the server (a server administrator). */
+export const staffUsers = pgTable("staff_users", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  role: text("role").$type<StaffRole>().notNull().default("editor"),
+  lgaId: text("lga_id").references(() => lgas.id),
+  passwordHash: text("password_hash").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastSignIn: timestamp("last_sign_in", { withTimezone: true }),
 });
 
 export const chunks = pgTable("chunks", {
@@ -174,8 +193,12 @@ export const questions = pgTable("questions", {
   flagged: boolean("flagged").notNull().default(false),
   flagNote: text("flag_note"),
   flagResolved: boolean("flag_resolved").notNull().default(false),
-  gapStatus: text("gap_status"), // null | open | resolved  (set when answered = false)
+  flagFault: text("flag_fault"), // record | retrieval | wording | not_wrong
+  flagResolvedAt: timestamp("flag_resolved_at", { withTimezone: true }),
+  gapStatus: text("gap_status"), // null | open | assigned | duplicate | resolved  (set when answered = false)
+  gapOwner: text("gap_owner"),
   gapResolution: text("gap_resolution"),
+  gapResolvedAt: timestamp("gap_resolved_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

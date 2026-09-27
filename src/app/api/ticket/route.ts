@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb, schema as s } from "@/db";
 import { getLga } from "@/lib/queries";
 import { allow, clientIp, intOrNull, readJson, TOO_MANY } from "@/lib/ratelimit";
+import { notify } from "@/lib/notify";
 
 /** "Talk to a person": creates a ticket for a named officer. The contact number is stored, never sent to a model. */
 export async function POST(req: Request) {
@@ -17,5 +18,6 @@ export async function POST(req: Request) {
     .insert(s.tickets)
     .values({ lgaId, questionId: intOrNull(body.questionId), summary, contact })
     .returning({ id: s.tickets.id });
+  notify({ kind: "ticket", lgaId, title: `New ticket #${row.id}`, body: `${summary.slice(0, 160)}${contact ? " (phone left)" : " (no phone)"}`, link: `/admin/${lgaId}/tickets` });
   return NextResponse.json({ ok: true, ticketId: row.id });
 }

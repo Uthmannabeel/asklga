@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb, schema as s } from "@/db";
 import { getLga } from "@/lib/queries";
 import { allow, clientIp, readJson, TOO_MANY } from "@/lib/ratelimit";
+import { notify } from "@/lib/notify";
 
 /** Investor enquiry: logged for the Planning unit to route to the right agency. */
 export async function POST(req: Request) {
@@ -23,5 +24,6 @@ export async function POST(req: Request) {
       contact: typeof body.contact === "string" ? body.contact.trim().slice(0, 120) || null : null,
     })
     .returning({ id: s.investorEnquiries.id });
+  notify({ kind: "enquiry", lgaId, title: `New investor enquiry #${row.id} (${sector})`, body: summary.slice(0, 160), link: `/admin/${lgaId}/enquiries` });
   return NextResponse.json({ ok: true, enquiryId: row.id });
 }

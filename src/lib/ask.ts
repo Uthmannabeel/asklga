@@ -39,6 +39,16 @@ export const PROVIDER: Provider =
 // 26 Sep 2026). Set ASKLGA_MODEL to a bigger model once billing is enabled.
 export const MODEL = process.env.ASKLGA_MODEL ?? (PROVIDER === "gemini" ? "gemini-3.5-flash-lite" : "claude-opus-5");
 
+/**
+ * What the staff workspace does with internal documents. The build plan's rule is that a
+ * foreign model provider only ever sees public content, so the default is "search": internal
+ * passages are matched by keyword on this server and returned as-is, with no model call.
+ * "model" sends them to the provider like public content; set it only with the partner's
+ * written sign-off or a Nigerian-hosted model.
+ */
+export type InternalMode = "search" | "model";
+export const INTERNAL_MODE: InternalMode = process.env.ASKLGA_INTERNAL_SCOPE === "model" ? "model" : "search";
+
 /** Thrown when the answer service cannot run at all (no key, bad key). The message is safe to show residents. */
 export class AnswerServiceOffline extends Error {
   constructor(message = "Answers are not switched on for this LGA yet. You can still browse the services, projects and documents here, or ask a person at the secretariat.") {
@@ -268,7 +278,29 @@ export type AskResult = {
   latencyMs: number;
   piiRemoved: number;
   figureCheck: "passed" | "failed" | "skipped";
+  mode: "model" | "search";
 };
+
+/**
+ * Search-only answer for internal scope: the best-matching passage, quoted, with its document
+ * cited. Nothing leaves the server. Kept short so it reads like an answer, not a dump.
+ */
+function searchOnlyAnswer(passages: { documentId: string; title: string; text: string }[]): Answer {
+  if (!passages.length) return declined("No internal or public passage matched (search mode)");
+  const top = passages[0];
+  const words = top.text.replace(/\s+/g, " ").trim().split(" ");
+  const quote = words.length > 90 ? words.slice(0, 90).join(" ") + " …" : words.join(" ");
+  const others = passages.slice(1, 4).map((p) => p.documentId).filter((id, i, a) => id !== top.documentId && a.indexOf(id) === i);
+  return {
+    language: "en",
+    answered: true,
+    answer: `From "${top.title}": ${quote}`,
+    citations: [{ type: "document", id: top.documentId }, ...others.map((id) => ({ type: "document" as const, id }))],
+    escalate: false,
+    disclaimer: "none",
+    gap_summary: "",
+  };
+}
 
 /** Joins digit groups ("185,000,000", "185 000 000") without gluing separate numbers ("2026 120"). */
 function joinDigitGroups(text: string): string {
@@ -298,11 +330,14 @@ export async function ask(input: AskInput): Promise<AskResult> {
 
   const registerBlock = `# APPROVED RECORDS FOR THIS LGA (scope: ${scope})\n\n${register.text}`;
   const userBlock = `Audience: ${audience}.\n\nRelevant document passages:\n${passageBlock}\n\nQuestion:\n${question}`;
+  const searchOnly = scope === "internal" && INTERNAL_MODE === "search";
   const parsed: Answer = looksLikeInstruction(question)
     ? declined("Instruction-like question refused before the model was called")
-    : PROVIDER === "gemini"
-      ? await generateWithGemini(SYSTEM, registerBlock, userBlock)
-      : await generateWithAnthropic(SYSTEM, registerBlock, userBlock);
+    : searchOnly
+      ? searchOnlyAnswer(passages)
+      : PROVIDER === "gemini"
+        ? await generateWithGemini(SYSTEM, registerBlock, userBlock)
+        : await generateWithAnthropic(SYSTEM, registerBlock, userBlock);
 
   // Post-check 1: citations must be real, approved records.
   // The record type comes from the register, not the model, so links always resolve.
@@ -383,5 +418,6 @@ export async function ask(input: AskInput): Promise<AskResult> {
     latencyMs,
     piiRemoved: removed,
     figureCheck,
+    mode: searchOnly ? "search" : "model",
   };
 }

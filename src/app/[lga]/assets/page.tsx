@@ -17,7 +17,7 @@ export default async function AssetsPage({ params }: { params: Promise<{ lga: st
   const points = assets.filter((a) => a.lat != null && a.lng != null).map((a) => ({ id: a.id, name: a.name, lat: a.lat!, lng: a.lng!, status: a.condition === "poor" ? "stalled" : a.condition === "good" ? "completed" : "planned", href: `/${lga}/assets#${a.id}` }));
 
   return (
-    <LgaShell lgaId={lga}>
+    <LgaShell lgaId={lga} back={`/${lga}/assets`}>
       <section className="grid gap-2">
         <h1>Public assets inventory</h1>
         <p className="measure">Health centres, schools, boreholes, markets and other public assets the LGA maintains, with their condition at the last inspection.</p>
