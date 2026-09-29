@@ -21,7 +21,7 @@ const VIEWS = {
 } as const;
 type View = keyof typeof VIEWS;
 
-export default async function NationalMoney({ searchParams }: { searchParams: Promise<{ period?: string; view?: string; state?: string }> }) {
+export default async function NationalMoney({ searchParams }: { searchParams: Promise<{ period?: string; view?: string; state?: string; show?: string }> }) {
   const sp = await searchParams;
   const all = await periods();
   const period = sp.period && all.includes(sp.period) ? sp.period : all[0];
@@ -38,7 +38,8 @@ export default async function NationalMoney({ searchParams }: { searchParams: Pr
     : view === "lowest" ? [...scoped].reverse().slice(0, 20)
     : view === "per-resident-high" ? [...withHead].sort((a, b) => b.perHead! - a.perHead!).slice(0, 20)
     : view === "per-resident-low" ? [...withHead].sort((a, b) => a.perHead! - b.perHead!).slice(0, 20)
-    : scoped;
+    : sp.show === "all" || stateFilter ? scoped : scoped.slice(0, 50);
+  const truncated = view === "all" && !stateFilter && sp.show !== "all" && scoped.length > 50;
   const byState = states
     .map((st) => {
       const r = rows.filter((x) => x.state === st);
@@ -95,7 +96,7 @@ export default async function NationalMoney({ searchParams }: { searchParams: Pr
               <section id="table" className="grid gap-4" style={{ scrollMarginTop: "1rem" }}>
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div className="grid gap-1">
-                    <h2>{VIEWS[view]}{stateFilter ? `, ${stateLabel(stateFilter)}` : ""}, {periodLabel(period, true)}</h2>
+                    <h2>{truncated ? "Top 50 LGAs" : VIEWS[view]}{stateFilter ? `, ${stateLabel(stateFilter)}` : ""}, {periodLabel(period, true)}</h2>
                     {rows.length < fullCount ? <p className="small muted">This month covers {rows.length} councils; states whose published council rows do not add up to the official state summary are left out.</p> : null}
                   </div>
                   <form method="get" action="/money" className="flex flex-wrap items-end gap-2">
@@ -138,6 +139,7 @@ export default async function NationalMoney({ searchParams }: { searchParams: Pr
                     </tbody>
                   </table>
                 </div>
+                {truncated ? <p><Link href={`${q({}).replace("#table", "")}&show=all#table`} scroll={false} className="btn btn-quiet btn-sm">Show all {scoped.length} councils</Link></p> : null}
                 <p className="small muted measure">Per resident divides the month&apos;s allocation by the 2006 census population. It shows relative weight, not what is spent on each person. Kogi and Lokoja are not listed yet: the published tables name these two councils in a way that cannot be matched to them with certainty.</p>
               </section>
 
