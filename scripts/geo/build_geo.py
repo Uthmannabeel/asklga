@@ -190,6 +190,17 @@ for s, sg in states.items():
         "lgas": {lid: path(g, fr, 0.6) for lid, g in lg.items()},
         "labels": {lid: label_point(g, fr) for lid, g in lg.items()},
     }
+# LGA centre points in lon/lat (area-weighted centroid of the largest ring) for map centring.
+cent = {}
+for lid, (st, g) in matched.items():
+    best = max((p[0] for p in polys(g)), key=lambda r: abs(ring_area(r)))
+    a = ring_area(best) or 1e-12
+    cx = sum((best[i][0] + best[i + 1][0]) * (best[i][0] * best[i + 1][1] - best[i + 1][0] * best[i][1]) for i in range(len(best) - 1)) / (6 * a)
+    cy = sum((best[i][1] + best[i + 1][1]) * (best[i][0] * best[i + 1][1] - best[i + 1][0] * best[i][1]) for i in range(len(best) - 1)) / (6 * a)
+    cent[lid] = [round(cy, 5), round(cx, 5)]
+(REPO / "src/db/centroids.json").write_text(json.dumps(cent, separators=(",", ":"), sort_keys=True), encoding="utf-8")
+print("centroids", len(cent))
+
 dst = REPO / "src/data/geo.json"
 dst.parent.mkdir(exist_ok=True)
 dst.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
