@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { PageHead } from "@/components/PageHead";
 import { BarChart } from "@/components/BarChart";
-import { month, nationalSeries, naira, nairaShort, periodLabel, periods, type MonthRow } from "@/lib/money";
+import { month, monthlySeries, nationalSeries, naira, nairaShort, periodLabel, periods, type MonthRow } from "@/lib/money";
 import { stateLabel, stateSlug } from "@/lib/ngTiles";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,7 @@ export default async function NationalMoney({ searchParams }: { searchParams: Pr
   const view: View = sp.view && sp.view in VIEWS ? (sp.view as View) : "all";
   const [rows, series] = period ? await Promise.all([month(period), nationalSeries(36)]) : [[] as MonthRow[], []];
   const total = rows.reduce((n, r) => n + r.value, 0);
+  const fullCount = Math.max(0, ...series.map((r) => r.lgas));
   const states = [...new Set(rows.map((r) => r.state))].sort();
   const stateFilter = sp.state && states.includes(sp.state) ? sp.state : undefined;
   const scoped = stateFilter ? rows.filter((r) => r.state === stateFilter) : rows;
@@ -82,13 +83,21 @@ export default async function NationalMoney({ searchParams }: { searchParams: Pr
               {series.length > 1 ? (
                 <section className="grid gap-3">
                   <h2>Total to all local governments, by month</h2>
-                  <BarChart data={series.map((r) => ({ label: periodLabel(r.period), value: r.total }))} format={naira} label="Monthly FAAC allocation to all local governments" height={200} />
+                  <BarChart data={monthlySeries(series, (r) => r.total)} format={naira} label="Monthly FAAC allocation to all local governments" height={200} />
+                  {series.some((r) => r.lgas < fullCount) ? (
+                    <p className="small muted measure">
+                      {series.filter((r) => r.lgas < fullCount).map((r) => `${periodLabel(r.period, true)} covers ${r.lgas} councils`).join("; ")}. Those months leave out states whose published council rows do not add up to the official state summary, so their totals are lower than what was shared. Gaps are months not published. <Link href="/about#sources">Sources</Link>
+                    </p>
+                  ) : null}
                 </section>
               ) : null}
 
               <section id="table" className="grid gap-4" style={{ scrollMarginTop: "1rem" }}>
                 <div className="flex flex-wrap items-end justify-between gap-4">
-                  <h2>{VIEWS[view]}{stateFilter ? `, ${stateLabel(stateFilter)}` : ""}, {periodLabel(period, true)}</h2>
+                  <div className="grid gap-1">
+                    <h2>{VIEWS[view]}{stateFilter ? `, ${stateLabel(stateFilter)}` : ""}, {periodLabel(period, true)}</h2>
+                    {rows.length < fullCount ? <p className="small muted">This month covers {rows.length} councils; states whose published council rows do not add up to the official state summary are left out.</p> : null}
+                  </div>
                   <form method="get" action="/money" className="flex flex-wrap items-end gap-2">
                     <input type="hidden" name="view" value={view} />
                     <label className="grid gap-1 small">Month
@@ -129,7 +138,7 @@ export default async function NationalMoney({ searchParams }: { searchParams: Pr
                     </tbody>
                   </table>
                 </div>
-                <p className="small muted">Per resident divides the month&apos;s allocation by the 2006 census population where it is on file. It shows relative weight, not what is spent on each person.</p>
+                <p className="small muted measure">Per resident divides the month&apos;s allocation by the 2006 census population. It shows relative weight, not what is spent on each person. Kogi and Lokoja are not listed yet: the published tables name these two councils in a way that cannot be matched to them with certainty.</p>
               </section>
 
               <section className="grid gap-3">

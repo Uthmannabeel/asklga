@@ -54,7 +54,7 @@ export async function seedProfiles(db: any) {
     };
     take("headquarters", r.headquarters, p.headquarters);
     take("areaKm2", r.areaKm2, p.areaKm2);
-    take("population", r.population, p.population2006, { population: p.population2006, populationYear: 2006, populationSource: "2006 census" });
+    take("population", r.population, p.population2006, { population: p.population2006, populationYear: 2006, populationSource: "2006 census (NBS Annual Abstract of Statistics 2011)" });
     take("createdYear", r.createdYear, p.created);
     take("senatorialDistrict", r.senatorialDistrict, p.senatorialDistrict);
     if (Object.keys(set).length) pending.push({ id: p.id, set, src });

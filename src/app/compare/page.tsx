@@ -5,7 +5,7 @@ import { PageHead } from "@/components/PageHead";
 import { BarChart } from "@/components/BarChart";
 import { getLga } from "@/lib/queries";
 import { directory, lgaRecordCount } from "@/lib/national";
-import { ledger, naira, nairaShort, periodLabel } from "@/lib/money";
+import { ledger, monthlySeries, naira, nairaShort, periodLabel } from "@/lib/money";
 import { stateLabel, stateSlug } from "@/lib/ngTiles";
 
 export const dynamic = "force-dynamic";
@@ -108,7 +108,7 @@ export default async function Compare({ searchParams }: { searchParams: Promise<
                       <th scope="row" className="small">Last 12 months</th>
                       {items.map((i) => (
                         <td key={i.row.id} style={{ minWidth: "12rem" }}>
-                          {i.money.length > 1 ? <BarChart data={i.money.slice(-12).map((m) => ({ label: periodLabel(m.period), value: m.value }))} format={naira} label={`Monthly allocation to ${i.row.name}`} height={110} /> : null}
+                          {i.money.length > 1 ? <BarChart data={monthlySeries(i.money.slice(-12), (m) => m.value)} format={naira} label={`Monthly allocation to ${i.row.name}`} height={110} /> : null}
                         </td>
                       ))}
                     </tr>

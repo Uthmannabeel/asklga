@@ -8,18 +8,21 @@ import { getDb, schema as s } from "@/db";
 
 const amount = sql<number>`coalesce(${s.allocations.netNgn}, ${s.allocations.grossNgn})`;
 
-export type LedgerRow = { period: string; grossNgn: number | null; deductionsNgn: number | null; netNgn: number | null; value: number | null; change: number | null; source: string; sourceUrl: string | null };
+export type LedgerRow = { period: string; revenueMonth: string | null; grossNgn: number | null; deductionsNgn: number | null; netNgn: number | null; value: number | null; change: number | null; lines: Record<string, number> | null; source: string; sourceUrl: string | null };
 
 /** Every month on file for one LGA, oldest first, with change against the previous month. */
 export async function ledger(lgaId: string): Promise<LedgerRow[]> {
   const db = await getDb();
   const rows = await db.select().from(s.allocations).where(eq(s.allocations.lgaId, lgaId)).orderBy(asc(s.allocations.period));
   let prev: number | null = null;
+  let prevPeriod: string | null = null;
   return rows.map((r) => {
     const value = r.netNgn ?? r.grossNgn ?? null;
-    const change = value != null && prev ? (value - prev) / prev : null;
+    // Only compare with the month immediately before: a gap (an unpublished month) gets no change.
+    const change = value != null && prev && prevPeriod === previousMonth(r.period) ? (value - prev) / prev : null;
     prev = value;
-    return { period: r.period, grossNgn: r.grossNgn, deductionsNgn: r.deductionsNgn ?? null, netNgn: r.netNgn, value, change, source: r.source, sourceUrl: r.sourceUrl };
+    prevPeriod = r.period;
+    return { period: r.period, revenueMonth: r.revenueMonth ?? null, grossNgn: r.grossNgn, deductionsNgn: r.deductionsNgn ?? null, netNgn: r.netNgn, value, change, lines: (r.lines as Record<string, number> | null) ?? null, source: r.source, sourceUrl: r.sourceUrl };
   });
 }
 
@@ -110,4 +113,48 @@ export function nairaShort(n: number | null | undefined) {
   if (n >= 1e9) return `₦${(n / 1e9).toFixed(2)}B`;
   if (n >= 1e6) return `₦${(n / 1e6).toFixed(1)}M`;
   return naira(n);
+}
+
+/** Plain names for the published component lines of an allocation, in display order. */
+export const LINE_LABELS: [string, string][] = [
+  ["statutory", "Statutory allocation"],
+  ["vat", "Value Added Tax (VAT)"],
+  ["exchangeGain", "Exchange gain"],
+  ["augmentation", "Augmentation"],
+  ["solidMinerals", "Solid minerals"],
+  ["emtl", "Electronic Money Transfer Levy"],
+  ["netEcology", "Ecology fund, after transfer to NDDC or HYPPADEC"],
+  ["deduction", "Deductions"],
+];
+
+/** The components of one allocation as [label, amount] rows, including one-off lines. */
+export function lineRows(lines: Record<string, number> | null): [string, number][] {
+  if (!lines) return [];
+  const out: [string, number][] = [];
+  for (const [k, label] of LINE_LABELS) if (lines[k] != null && lines[k] !== 0) out.push([label, lines[k]]);
+  for (const [k, v] of Object.entries(lines)) if (k.startsWith("other:") && v) out.push([k.slice(6).trim(), v]);
+  return out;
+}
+
+/** "2024-11" -> "2024-10"; "2025-01" -> "2024-12". */
+export function previousMonth(p: string) {
+  const [y, m] = p.split("-").map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
+}
+
+/** Chart series with every month present: unpublished months come back as null, so gaps show. */
+export function monthlySeries<T extends { period: string }>(rows: T[], value: (r: T) => number | null): { label: string; value: number | null }[] {
+  if (!rows.length) return [];
+  const by = new Map(rows.map((r) => [r.period, r]));
+  const out: { label: string; value: number | null }[] = [];
+  let p = rows[0].period;
+  const last = rows[rows.length - 1].period;
+  for (let guard = 0; guard < 600; guard++) {
+    const r = by.get(p);
+    out.push({ label: periodLabel(p), value: r ? value(r) : null });
+    if (p === last) break;
+    const [y, m] = p.split("-").map(Number);
+    p = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+  }
+  return out;
 }

@@ -7,7 +7,7 @@ import { StateMap, NationalLocator } from "@/components/StateMap";
 import { BarChart } from "@/components/BarChart";
 import { stateLabel, stateSlug, tileBySlug, TILES } from "@/lib/ngTiles";
 import { stateLgas, stateSeries, type StateLgaRow } from "@/lib/states";
-import { naira, nairaShort, periodLabel } from "@/lib/money";
+import { monthlySeries, naira, nairaShort, periodLabel } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +52,7 @@ export default async function StatePage({ params, searchParams }: { params: Prom
   const pop = rows.reduce((n, r) => n + (r.population ?? 0), 0);
   const popCount = rows.filter((r) => r.population).length;
   const area = rows.reduce((n, r) => n + (r.areaKm2 ?? 0), 0);
+  const areaCount = rows.filter((r) => r.areaKm2).length;
   const monthTotal = rows.reduce((n, r) => n + (r.latest ?? 0), 0);
   const hasPop = popCount > 0, hasArea = rows.some((r) => r.areaKm2), hasMoney = period != null;
   const label = stateLabel(tile.state);
@@ -82,8 +83,8 @@ export default async function StatePage({ params, searchParams }: { params: Prom
           <dl className="fact-strip">
             <div><dt>Local government areas</dt><dd>{rows.length}</dd></div>
             <div><dt>Publishing records</dt><dd>{lit.length}</dd></div>
-            {hasPop ? <div><dt>Population, {popCount === rows.length ? "2006 census" : `${popCount} LGAs on file`}</dt><dd className="mono">{pop.toLocaleString("en-NG")}</dd></div> : null}
-            {hasArea ? <div><dt>Land area</dt><dd className="mono">{Math.round(area).toLocaleString("en-NG")} km²</dd></div> : null}
+            {hasPop ? <div><dt>Population, 2006 census{popCount < rows.length ? `, ${popCount} of ${rows.length} LGAs` : ""}</dt><dd className="mono">{pop.toLocaleString("en-NG")}</dd></div> : null}
+            {hasArea ? <div><dt>Land area{areaCount < rows.length ? `, ${areaCount} of ${rows.length} LGAs on file` : ""}</dt><dd className="mono">{Math.round(area).toLocaleString("en-NG")} km²</dd></div> : null}
             {hasMoney ? <div><dt>FAAC to its LGAs, {periodLabel(period!, true)}</dt><dd className="mono">{nairaShort(monthTotal)}</dd></div> : null}
           </dl>
         </PageHead>
@@ -103,7 +104,7 @@ export default async function StatePage({ params, searchParams }: { params: Prom
               {series.length > 1 ? (
                 <figure className="grid gap-2">
                   <figcaption className="font-bold">Monthly FAAC to all {label} LGAs</figcaption>
-                  <BarChart data={series.map((r) => ({ label: periodLabel(r.period), value: r.total }))} format={naira} label={`Monthly allocation to all LGAs in ${label}`} height={160} />
+                  <BarChart data={monthlySeries(series, (r) => r.total)} format={naira} label={`Monthly allocation to all LGAs in ${label}`} height={160} />
                 </figure>
               ) : null}
             </div>

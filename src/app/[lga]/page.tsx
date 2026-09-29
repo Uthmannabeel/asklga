@@ -9,7 +9,7 @@ import { formatDate, ordinal, pct } from "@/lib/format";
 import { dict, fill, uiLang } from "@/lib/i18n";
 import { getLga, listProjects, listServices } from "@/lib/queries";
 import { directory, lgaRecordCount } from "@/lib/national";
-import { ledger, naira, nairaShort, periodLabel, rankFor } from "@/lib/money";
+import { ledger, monthlySeries, naira, nairaShort, periodLabel, rankFor } from "@/lib/money";
 import { lgaFacts } from "@/lib/facts";
 import { codeForState } from "@/lib/geo";
 import { stateLabel, stateSlug } from "@/lib/ngTiles";
@@ -142,7 +142,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
               </div>
             </dl>
             <figure className="grid gap-2">
-              <BarChart data={last24.map((r) => ({ label: periodLabel(r.period), value: r.value }))} format={naira} label={`Monthly allocation to ${row.name}, last ${last24.length} months`} />
+              <BarChart data={monthlySeries(last24, (r) => r.value)} format={naira} label={`Monthly allocation to ${row.name}, last ${last24.length} months`} />
               <figcaption className="small muted">
                 As published by {latest.sourceUrl ? <a href={latest.sourceUrl} rel="noopener">{latest.source}</a> : latest.source}. Month-on-month change and ranks are calculated from the published figures.
               </figcaption>

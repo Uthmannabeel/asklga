@@ -1,0 +1,50 @@
+[
+ {
+  "period": "2024-11",
+  "state": "Gombe",
+  "summarySheet": 5328243230.67,
+  "sumOfLgcRows": 5387882762.33,
+  "difference": 59639531.66,
+  "summarySheetName": "Sum"
+ },
+ {
+  "period": "2024-11",
+  "state": "Kaduna",
+  "summarySheet": 11175242900.47,
+  "sumOfLgcRows": 11173826454.96,
+  "difference": -1416445.51,
+  "summarySheetName": "Sum"
+ },
+ {
+  "period": "2024-11",
+  "state": "Nasarawa",
+  "summarySheet": 5224470048.41,
+  "sumOfLgcRows": 5223763054.23,
+  "difference": -706994.18,
+  "summarySheetName": "Sum"
+ },
+ {
+  "period": "2024-11",
+  "state": "Oyo",
+  "summarySheet": 14934935700.01,
+  "sumOfLgcRows": 14937049093.96,
+  "difference": 2113393.95,
+  "summarySheetName": "Sum"
+ },
+ {
+  "period": "2024-11",
+  "state": "Plateau",
+  "summarySheet": 7340091215.45,
+  "sumOfLgcRows": 7339261682.96,
+  "difference": -829532.49,
+  "summarySheetName": "Sum"
+ },
+ {
+  "period": "2026-05",
+  "state": "Kano",
+  "summarySheet": 28454494621.67,
+  "sumOfLgcRows": 15926119350.12,
+  "difference": -12528375271.55,
+  "summarySheetName": "Summary"
+ }
+]

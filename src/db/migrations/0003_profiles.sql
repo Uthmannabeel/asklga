@@ -9,3 +9,9 @@ ALTER TABLE lgas ADD COLUMN IF NOT EXISTS fact_sources jsonb NOT NULL DEFAULT '{
 
 -- Statutory deductions between gross and net, when the published table breaks them out.
 ALTER TABLE allocations ADD COLUMN IF NOT EXISTS deductions_ngn bigint
+;
+
+-- Every component line of an allocation as published (statutory, VAT, ecology, exchange gain ...).
+ALTER TABLE allocations ADD COLUMN IF NOT EXISTS lines jsonb;
+-- The revenue month the disbursement relates to (FAAC shares one month's revenue the next month).
+ALTER TABLE allocations ADD COLUMN IF NOT EXISTS revenue_month text

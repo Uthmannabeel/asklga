@@ -46,6 +46,8 @@ export const allocations = pgTable("allocations", {
   grossNgn: bigint("gross_ngn", { mode: "number" }),
   deductionsNgn: bigint("deductions_ngn", { mode: "number" }),
   netNgn: bigint("net_ngn", { mode: "number" }),
+  lines: jsonb("lines").$type<Record<string, number>>(), // every published component, e.g. statutory, vat, netEcology
+  revenueMonth: text("revenue_month"), // YYYY-MM of the revenue shared in `period`
   source: text("source").notNull(),
   sourceUrl: text("source_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

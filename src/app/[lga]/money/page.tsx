@@ -4,7 +4,7 @@ import { LgaShell } from "@/components/LgaShell";
 import { PageHead } from "@/components/PageHead";
 import { BarChart } from "@/components/BarChart";
 import { getLga } from "@/lib/queries";
-import { ledger, naira, nairaShort, periodLabel, rankFor, totalOnFile } from "@/lib/money";
+import { ledger, lineRows, monthlySeries, naira, nairaShort, periodLabel, rankFor, totalOnFile } from "@/lib/money";
 import { ordinal, pct } from "@/lib/format";
 import { stateLabel, stateSlug } from "@/lib/ngTiles";
 
@@ -59,6 +59,7 @@ export default async function MoneyPage({ params }: { params: Promise<{ lga: str
       {rows.length === 0 ? (
         <section className="empty measure">
           <p className="font-bold">No allocation months loaded for {row.name} yet</p>
+          {lga === "kogi" || lga === "lokoja" ? <p style={{ color: "var(--ink-2)" }}>The published FAAC tables list &quot;Kogi&quot; and &quot;Koton Karfe&quot; but not Lokoja, and Koton Karfe is Kogi LGA&apos;s headquarters, so the figures cannot yet be assigned to Kogi or Lokoja with certainty. They will be added once the mapping is confirmed.</p> : null}
           <p style={{ color: "var(--ink-2)" }}>Figures are imported from the published monthly FAAC tables, each row with its source. When they are, this page shows a monthly chart, the full ledger and how {row.name} compares with the rest of {stateLabel(row.state)}.</p>
           <p className="small"><Link href="/money">See allocations across Nigeria</Link></p>
         </section>
@@ -66,13 +67,40 @@ export default async function MoneyPage({ params }: { params: Promise<{ lga: str
         <>
           <section className="grid gap-3" aria-labelledby="chart-h">
             <h2 id="chart-h">Month by month</h2>
-            <BarChart data={rows.slice(-36).map((r) => ({ label: periodLabel(r.period), value: r.value }))} format={naira} label={`Monthly allocation to ${row.name}`} height={220} />
+            <BarChart data={monthlySeries(rows.slice(-36), (r) => r.value)} format={naira} label={`Monthly allocation to ${row.name}`} height={220} />
             {byYear.size > 1 ? (
               <p className="small muted">
                 {[...byYear.entries()].map(([y, v]) => `${y}: ${nairaShort(v)}`).join(" · ")}
               </p>
             ) : null}
           </section>
+
+          {lineRows(latest!.lines).length ? (
+            <section className="grid gap-4" aria-labelledby="parts-h">
+              <div className="grid gap-1">
+                <h2 id="parts-h">What made up {periodLabel(latest!.period, true)}</h2>
+                <p className="small muted">Each line as published. {latest!.revenueMonth ? `Shared in ${periodLabel(latest!.period, true)} from ${periodLabel(latest!.revenueMonth, true)} revenue.` : ""}</p>
+              </div>
+              <div className="grid gap-2 max-w-3xl">
+                {lineRows(latest!.lines).map(([label, v]) => {
+                  const share = latest!.value ? Math.abs(v) / latest!.value : 0;
+                  return (
+                    <div key={label} className="grid gap-1 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_9rem] sm:items-center sm:gap-4">
+                      <span>{label}</span>
+                      <span aria-hidden="true" style={{ height: 10, background: "var(--canvas)", borderRadius: 2, overflow: "hidden" }}>
+                        <span style={{ display: "block", height: "100%", width: `${Math.min(100, share * 100).toFixed(1)}%`, background: v < 0 ? "var(--danger)" : "var(--civic)" }} />
+                      </span>
+                      <span className="mono sm:text-right">{v < 0 ? "−" : ""}{naira(Math.abs(v))} <span className="muted small">{(share * 100).toFixed(0)}%</span></span>
+                    </div>
+                  );
+                })}
+                <div className="grid gap-1 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_9rem] sm:gap-4 font-bold" style={{ borderTop: "2px solid var(--ink)", paddingTop: "0.5rem" }}>
+                  <span>Total net allocation</span><span />
+                  <span className="mono sm:text-right">{naira(latest!.value)}</span>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="grid gap-3" aria-labelledby="ledger-h">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -96,7 +124,7 @@ export default async function MoneyPage({ params }: { params: Promise<{ lga: str
                     <tr key={r.period}>
                       <td>{periodLabel(r.period, true)}</td>
                       {hasGross ? <td className="num">{naira(r.grossNgn)}</td> : null}
-                      {hasDeductions ? <td className="num">{naira(r.deductionsNgn)}</td> : null}
+                      {hasDeductions ? <td className="num">{r.deductionsNgn != null ? naira(r.deductionsNgn) : ""}</td> : null}
                       <td className="num"><strong>{naira(r.netNgn ?? r.grossNgn)}</strong></td>
                       <td className={`num ${r.change == null ? "" : r.change >= 0 ? "up" : "down"}`}>{r.change == null ? "" : pct(r.change)}</td>
                       <td className="small">{r.sourceUrl ? <a href={r.sourceUrl} rel="noopener" style={{ fontWeight: 400 }}>{r.source}</a> : r.source}</td>
@@ -106,7 +134,7 @@ export default async function MoneyPage({ params }: { params: Promise<{ lga: str
               </table>
             </div>
             <p className="small muted measure">
-              Gross is the council&apos;s share before deductions; net is the amount paid after statutory deductions. Figures are as published. Change, totals and ranks are calculated from them. <Link href="/standard#allocations">Field definitions</Link>
+              Months are the month FAAC shared the money; each relates to the previous month&apos;s revenue. Net is the total net allocation paid to the council. Figures are as published, rounded to the nearest naira. A blank deduction means that month&apos;s table has no deductions column; a blank change means the month before is not published. Change, totals and ranks are calculated from them. <Link href="/standard#allocations">Field definitions</Link>
             </p>
           </section>
         </>

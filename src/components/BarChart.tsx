@@ -41,10 +41,16 @@ export function BarChart({
         const x = padL + i * bw + bw * 0.14;
         return (
           <g key={d.label}>
-            <rect x={x} y={padT + innerH - h} width={bw * 0.72} height={Math.max(h, 0.5)} className={`bar${i === data.length - 1 ? " is-last" : ""}`}>
-              <title>{`${d.label}: ${d.value == null ? "not published" : format(d.value)}`}</title>
-            </rect>
-            {i % every === 0 || i === data.length - 1 ? (
+            {d.value == null ? (
+              <rect x={x} y={padT} width={bw * 0.72} height={innerH} fill="transparent">
+                <title>{`${d.label}: not published`}</title>
+              </rect>
+            ) : (
+              <rect x={x} y={padT + innerH - h} width={bw * 0.72} height={Math.max(h, 0.5)} className={`bar${i === data.length - 1 ? " is-last" : ""}`}>
+                <title>{`${d.label}: ${format(d.value)}`}</title>
+              </rect>
+            )}
+            {(i % every === 0 && data.length - 1 - i >= Math.ceil(every / 2)) || i === data.length - 1 ? (
               <text x={x + bw * 0.36} y={height - 8} textAnchor="middle">{d.label}</text>
             ) : null}
           </g>

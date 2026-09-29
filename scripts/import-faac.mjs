@@ -4,7 +4,8 @@
  *
  *   node scripts/import-faac.mjs path/to/faac.json [--dry-run]
  *
- * Input: a JSON array of {id, period:"YYYY-MM", grossNgn?, deductionsNgn?, netNgn?, source, sourceUrl?}
+ * Input: a JSON array of {id, period:"YYYY-MM", grossNgn?, deductionsNgn?, netNgn?, source, sourceUrl?,
+ * lines?: {component: naira}, revenueMonth?: "YYYY-MM"}
  * where id is the LGA slug from src/db/lgas.json. Uses DATABASE_URL when set (Postgres),
  * otherwise the local embedded database in ./data/pglite. Existing (lga, month) rows are kept:
  * this never overwrites a figure already on file.
@@ -23,9 +24,10 @@ const lgas = new Set(JSON.parse(fs.readFileSync(path.join(process.cwd(), "src/db
 
 const bad = [];
 const good = [];
+// Deductions are published as negative numbers (subtracted from the total); they are stored as amounts.
 for (const r of rows) {
   const int = (v) => (v == null || v === "" ? null : Math.round(Number(v)));
-  const row = { lga_id: r.id, period: r.period, gross_ngn: int(r.grossNgn), deductions_ngn: int(r.deductionsNgn), net_ngn: int(r.netNgn), source: r.source, source_url: r.sourceUrl ?? r.source_url ?? null };
+  const row = { lga_id: r.id, period: r.period, gross_ngn: int(r.grossNgn), deductions_ngn: r.deductionsNgn == null || r.deductionsNgn === "" ? null : Math.abs(int(r.deductionsNgn)), net_ngn: int(r.netNgn), source: r.source, source_url: r.sourceUrl ?? r.source_url ?? null, lines: r.lines && typeof r.lines === "object" ? JSON.stringify(r.lines) : null, revenue_month: /^\d{4}-\d{2}$/.test(r.revenueMonth ?? "") ? r.revenueMonth : null };
   const why = !lgas.has(row.lga_id) ? "unknown LGA id" : !/^\d{4}-\d{2}$/.test(row.period ?? "") ? "bad period" : !row.source ? "missing source" : row.gross_ngn == null && row.net_ngn == null ? "no figure" : [row.gross_ngn, row.net_ngn, row.deductions_ngn].some((v) => v != null && (!Number.isFinite(v) || v < 0)) ? "bad figure" : null;
   if (why) bad.push({ ...r, why });
   else good.push(row);
@@ -50,6 +52,8 @@ if (process.env.DATABASE_URL) {
 
 // The deductions column arrives with migration 0003; make sure it exists before inserting.
 await exec("ALTER TABLE allocations ADD COLUMN IF NOT EXISTS deductions_ngn bigint");
+await exec("ALTER TABLE allocations ADD COLUMN IF NOT EXISTS lines jsonb");
+await exec("ALTER TABLE allocations ADD COLUMN IF NOT EXISTS revenue_month text");
 
 let inserted = 0;
 const BATCH = 500;
@@ -57,12 +61,12 @@ for (let i = 0; i < good.length; i += BATCH) {
   const chunk = good.slice(i, i + BATCH);
   const params = [];
   const values = chunk.map((r, j) => {
-    params.push(r.lga_id, r.period, r.gross_ngn, r.deductions_ngn, r.net_ngn, r.source, r.source_url);
-    const b = j * 7;
-    return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7})`;
+    params.push(r.lga_id, r.period, r.gross_ngn, r.deductions_ngn, r.net_ngn, r.source, r.source_url, r.lines, r.revenue_month);
+    const b = j * 9;
+    return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7},$${b + 8}::jsonb,$${b + 9})`;
   });
   const res = await exec(
-    `INSERT INTO allocations (lga_id, period, gross_ngn, deductions_ngn, net_ngn, source, source_url) VALUES ${values.join(",")} ON CONFLICT (lga_id, period) DO NOTHING`,
+    `INSERT INTO allocations (lga_id, period, gross_ngn, deductions_ngn, net_ngn, source, source_url, lines, revenue_month) VALUES ${values.join(",")} ON CONFLICT (lga_id, period) DO NOTHING`,
     params,
   );
   inserted += res.rowCount ?? res.affectedRows ?? 0;
