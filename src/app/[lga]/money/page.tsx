@@ -1,80 +1,128 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LgaShell } from "@/components/LgaShell";
+import { PageHead } from "@/components/PageHead";
+import { BarChart } from "@/components/BarChart";
 import { getLga } from "@/lib/queries";
-import { formatNaira } from "@/lib/register";
-import { allocationsFor, stateAllocationContext } from "@/lib/national";
+import { ledger, naira, nairaShort, periodLabel, rankFor, totalOnFile } from "@/lib/money";
+import { ordinal, pct } from "@/lib/format";
+import { stateLabel, stateSlug } from "@/lib/ngTiles";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Money from the Federation Account" };
+
+export async function generateMetadata({ params }: { params: Promise<{ lga: string }> }) {
+  const { lga } = await params;
+  const row = await getLga(lga);
+  return { title: row ? `Federation allocations to ${row.name} LGA` : "Money" };
+}
 
 /**
- * "Your LGA's money": the monthly Federation Account (FAAC) allocation to this LGA, as
- * published in the monthly tables. Since the 2024 Supreme Court judgment on local government
- * financial autonomy this is the most-asked number about any LGA and the hardest to find.
+ * "Your LGA's money": every published monthly Federation Account (FAAC) allocation to this
+ * LGA. Since the 2024 Supreme Court judgment on local government financial autonomy this is the
+ * most-asked number about any LGA and the hardest to find.
  */
 export default async function MoneyPage({ params }: { params: Promise<{ lga: string }> }) {
   const { lga } = await params;
-  const [row, rows] = await Promise.all([getLga(lga), allocationsFor(lga, 36)]);
+  const [row, rows, total] = await Promise.all([getLga(lga), ledger(lga), totalOnFile(lga)]);
   if (!row) notFound();
-  const latest = rows[0] ?? null;
-  const ctx = latest ? await stateAllocationContext(row.state, latest.period) : null;
-  const twelve = rows.slice(0, 12);
-  const total12 = twelve.reduce((n, r) => n + (r.netNgn ?? r.grossNgn ?? 0), 0);
+  const latest = rows.at(-1) ?? null;
+  const rank = latest ? await rankFor(lga, row.state, latest.period) : null;
+  const newestFirst = [...rows].reverse();
+  const hasDeductions = rows.some((r) => r.deductionsNgn != null);
+  const hasGross = rows.some((r) => r.grossNgn != null);
+  const byYear = new Map<string, number>();
+  for (const r of rows) byYear.set(r.period.slice(0, 4), (byYear.get(r.period.slice(0, 4)) ?? 0) + (r.value ?? 0));
+
   return (
-    <LgaShell lgaId={lga} back={`/${lga}/money`}>
-      <section className="grid gap-2 measure">
-        <p className="small"><Link href={`/${lga}`}>{row.name}</Link></p>
-        <h1>Money from the Federation Account</h1>
-        <p>
-          Every month the Federation Account Allocation Committee shares federal revenue among the federal government, the states and all 774 local governments. This page shows what was allocated to {row.name}, as published in the monthly tables, so residents can compare it with what they see on the ground.
-        </p>
-      </section>
+    <LgaShell
+      lgaId={lga}
+      back={`/${lga}/money`}
+      hero={
+        <PageHead
+          crumbs={[{ href: "/", label: "Nigeria" }, { href: `/state/${stateSlug(row.state)}`, label: stateLabel(row.state) }, { href: `/${lga}`, label: row.name }]}
+          eyebrow="Federation Account (FAAC)"
+          title={`Money allocated to ${row.name}`}
+          lede="Every month the Federation Account Allocation Committee shares federal revenue among the federal government, the states and all 774 local governments. These are the published figures for this council, so residents can set them beside what they see on the ground."
+        >
+          {latest ? (
+            <dl className="fact-strip">
+              <div><dt>{periodLabel(latest.period, true)}</dt><dd className="mono">{naira(latest.value)}</dd></div>
+              <div><dt>Change on previous month</dt><dd className={`mono delta ${latest.change != null && latest.change < 0 ? "down" : "up"}`}>{latest.change != null ? pct(latest.change) : "Not available"}</dd></div>
+              <div><dt>Total on file, {total.months} months</dt><dd className="mono">{nairaShort(total.total)}</dd></div>
+              {rank && rank.stateOf > 1 ? <div><dt>Rank in {stateLabel(row.state)}</dt><dd>{ordinal(rank.state)} of {rank.stateOf}</dd></div> : null}
+              {row.population && latest.value ? <div><dt>Per resident, latest month</dt><dd className="mono">{naira(latest.value / row.population)}</dd></div> : null}
+            </dl>
+          ) : null}
+        </PageHead>
+      }
+    >
       {rows.length === 0 ? (
-        <section className="measure grid gap-2">
-          <div className="stamp stamp-caution">
-            <div><strong>Not loaded yet</strong></div>
-            <div>No allocation months have been loaded for {row.name}. Figures are imported from the published monthly tables by the portal administrators; when they are, they appear here with the source linked.</div>
-          </div>
-          <p className="small muted">Officials: the import accepts the published table as CSV. See <Link href="/join">how to join</Link>.</p>
+        <section className="empty measure">
+          <p className="font-bold">No allocation months loaded for {row.name} yet</p>
+          <p style={{ color: "var(--ink-2)" }}>Figures are imported from the published monthly FAAC tables, each row with its source. When they are, this page shows a monthly chart, the full ledger and how {row.name} compares with the rest of {stateLabel(row.state)}.</p>
+          <p className="small"><Link href="/money">See allocations across Nigeria</Link></p>
         </section>
       ) : (
         <>
-          <section className="grid gap-3">
-            <table className="max-w-2xl">
-              <tbody>
-                <tr><th>Latest month on file</th><td>{latest!.period}: {formatNaira(latest!.netNgn ?? latest!.grossNgn)}{latest!.grossNgn && latest!.netNgn && latest!.grossNgn !== latest!.netNgn ? ` net of ${formatNaira(latest!.grossNgn)} gross` : ""}</td></tr>
-                <tr><th>Last {twelve.length} month{twelve.length === 1 ? "" : "s"} on file</th><td>{formatNaira(total12)}</td></tr>
-                {ctx && Number(ctx.lgas) > 1 ? <tr><th>{row.state} State, {latest!.period}</th><td>{Number(ctx.lgas)} LGAs on file, median {formatNaira(Number(ctx.median))}, total {formatNaira(Number(ctx.total))}</td></tr> : null}
-                {row.population && latest ? <tr><th>Per resident, latest month</th><td>{formatNaira(Math.round((latest.netNgn ?? latest.grossNgn ?? 0) / row.population))} (population {row.population.toLocaleString("en-NG")}{row.populationYear ? `, ${row.populationYear}` : ""})</td></tr> : null}
-              </tbody>
-            </table>
+          <section className="grid gap-3" aria-labelledby="chart-h">
+            <h2 id="chart-h">Month by month</h2>
+            <BarChart data={rows.slice(-36).map((r) => ({ label: periodLabel(r.period), value: r.value }))} format={naira} label={`Monthly allocation to ${row.name}`} height={220} />
+            {byYear.size > 1 ? (
+              <p className="small muted">
+                {[...byYear.entries()].map(([y, v]) => `${y}: ${nairaShort(v)}`).join(" · ")}
+              </p>
+            ) : null}
           </section>
-          <section className="grid gap-2">
-            <h2>Month by month</h2>
+
+          <section className="grid gap-3" aria-labelledby="ledger-h">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 id="ledger-h">Ledger</h2>
+              <a href={`/api/${lga}/open/allocations.csv`} className="small">Download CSV</a>
+            </div>
             <div className="table-scroll">
-              <table className="max-w-3xl">
-                <thead><tr><th>Month</th><th>Gross</th><th>Net paid</th><th>Source</th></tr></thead>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    {hasGross ? <th className="num">Gross</th> : null}
+                    {hasDeductions ? <th className="num">Deductions</th> : null}
+                    <th className="num">{rows.some((r) => r.netNgn != null) ? "Net paid" : "Allocation"}</th>
+                    <th className="num">Change</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id}>
-                      <td>{r.period}</td>
-                      <td>{formatNaira(r.grossNgn)}</td>
-                      <td>{formatNaira(r.netNgn)}</td>
-                      <td className="small">{r.sourceUrl ? <a href={r.sourceUrl} rel="noopener">{r.source}</a> : r.source}</td>
+                  {newestFirst.map((r) => (
+                    <tr key={r.period}>
+                      <td>{periodLabel(r.period, true)}</td>
+                      {hasGross ? <td className="num">{naira(r.grossNgn)}</td> : null}
+                      {hasDeductions ? <td className="num">{naira(r.deductionsNgn)}</td> : null}
+                      <td className="num"><strong>{naira(r.netNgn ?? r.grossNgn)}</strong></td>
+                      <td className={`num ${r.change == null ? "" : r.change >= 0 ? "up" : "down"}`}>{r.change == null ? "" : pct(r.change)}</td>
+                      <td className="small">{r.sourceUrl ? <a href={r.sourceUrl} rel="noopener" style={{ fontWeight: 400 }}>{r.source}</a> : r.source}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="small muted">N = naira. Gross is the LGA&apos;s share before deductions; net is the amount paid after statutory deductions. Figures are as published; the portal does not compute or adjust them. <Link href="/standard#allocations">Field definitions</Link>.</p>
+            <p className="small muted measure">
+              Gross is the council&apos;s share before deductions; net is the amount paid after statutory deductions. Figures are as published. Change, totals and ranks are calculated from them. <Link href="/standard#allocations">Field definitions</Link>
+            </p>
           </section>
         </>
       )}
-      <section className="measure grid gap-2">
-        <h2>What this money is for</h2>
-        <p>Local governments fund primary health centres, primary schools, markets, rural roads, drainage, waste collection and civil registration from this allocation and from their own revenue. The projects register on this portal is where an LGA shows what it built with it.</p>
-        <p className="small"><Link href={`/${lga}/projects`}>See the projects register</Link></p>
+
+      <section className="grid gap-3 md:grid-cols-2 md:gap-10" style={{ borderTop: "1px solid var(--rule)", paddingTop: "2rem" }}>
+        <div className="grid gap-2 content-start">
+          <h2 style={{ fontSize: "1.3rem" }}>What this money is for</h2>
+          <p style={{ color: "var(--ink-2)" }}>Local governments fund primary health centres, primary schools, markets, rural roads, drainage, waste collection and civil registration from this allocation and their own revenue.</p>
+          <p className="small"><Link href={`/${lga}/projects`}>See what {row.name} has published about its projects</Link></p>
+        </div>
+        <div className="grid gap-2 content-start">
+          <h2 style={{ fontSize: "1.3rem" }}>Compare</h2>
+          <p style={{ color: "var(--ink-2)" }}>See how {row.name} sits beside every other council in {stateLabel(row.state)} and across the country.</p>
+          <p className="small flex flex-wrap gap-x-4"><Link href={`/state/${stateSlug(row.state)}`}>{stateLabel(row.state)}</Link><Link href="/money">All of Nigeria</Link><Link href={`/compare?lgas=${lga}`}>Compare side by side</Link></p>
+        </div>
       </section>
     </LgaShell>
   );

@@ -1,6 +1,9 @@
-import { inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as s from "./schema";
 import lgaList from "./lgas.json";
+import renames from "./lga-renames.json";
+
+const RENAMES = renames as unknown as Record<string, [string, string]>;
 
 /**
  * The national directory: all 774 local government areas across the 36 states and the FCT,
@@ -14,19 +17,25 @@ export const DIRECTORY: DirectoryEntry[] = lgaList as DirectoryEntry[];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function seedDirectory(db: any) {
-  const ids = DIRECTORY.map((d) => d.id);
-  const existing = new Set<string>();
-  for (let i = 0; i < ids.length; i += 200) {
-    const rows = (await db.select({ id: s.lgas.id }).from(s.lgas).where(inArray(s.lgas.id, ids.slice(i, i + 200)))) as { id: string }[];
-    for (const r of rows) existing.add(r.id);
+  // One read of the whole table, then write only what actually differs, so a cold start costs
+  // one query instead of hundreds.
+  const current = new Map<string, { name: string; zone: string | null }>();
+  for (const r of (await db.select({ id: s.lgas.id, name: s.lgas.name, zone: s.lgas.zone }).from(s.lgas)) as { id: string; name: string; zone: string | null }[]) {
+    current.set(r.id, { name: r.name, zone: r.zone });
   }
-  const missing = DIRECTORY.filter((d) => !existing.has(d.id));
+  const missing = DIRECTORY.filter((d) => !current.has(d.id));
   for (let i = 0; i < missing.length; i += 100) {
     await db.insert(s.lgas).values(missing.slice(i, i + 100).map((d) => ({ id: d.id, name: d.name, state: d.state, zone: d.zone, demo: false })));
   }
   // Back-fill zones on rows that predate the column.
   for (const d of DIRECTORY) {
-    if (existing.has(d.id)) await db.update(s.lgas).set({ zone: d.zone }).where(inArray(s.lgas.id, [d.id]));
+    const row = current.get(d.id);
+    if (row && row.zone !== d.zone) await db.update(s.lgas).set({ zone: d.zone }).where(eq(s.lgas.id, d.id));
+  }
+  // Correct names the original public list garbled ("Sagba/Sagbama", "Moya" for Munya), but only
+  // where the row still holds the old wrong name, so an LGA's own edit is never overwritten.
+  for (const [id, [from, to]] of Object.entries(RENAMES)) {
+    if (current.get(id)?.name === from) await db.update(s.lgas).set({ name: to }).where(and(eq(s.lgas.id, id), eq(s.lgas.name, from)));
   }
   return missing.length;
 }

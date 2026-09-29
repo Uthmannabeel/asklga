@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { HTML_LANG, uiLang } from "@/lib/i18n";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  openGraph: { siteName: "AskLGA", locale: "en_NG", type: "website" },
+  twitter: { card: "summary_large_image" },
   title: { default: "AskLGA", template: "%s | AskLGA" },
   description: "Ask your local government about services, projects, public assets and investment, in your language, and get the official answer with its source.",
   manifest: "/manifest.webmanifest",

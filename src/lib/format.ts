@@ -26,3 +26,15 @@ export function isoDateLagos(value: Date): string {
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
+
+/** 1st, 2nd, 3rd, 11th, 21st. */
+export function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+}
+
+/** +7.0% / -10.4% */
+export function pct(n: number): string {
+  return `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
+}

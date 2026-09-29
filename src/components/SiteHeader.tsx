@@ -5,11 +5,11 @@ import { NavLinks } from "./NavLinks";
 
 const NATIONAL = [
   { href: "/", label: "Find your LGA", exact: true },
+  { href: "/money", label: "Money" },
+  { href: "/compare", label: "Compare" },
   { href: "/about-answers", label: "How answers work" },
-  { href: "/scoreboard", label: "Scoreboard" },
-  { href: "/insights", label: "What people ask" },
-  { href: "/standard", label: "Open standard" },
-  { href: "/join", label: "For LGA officials" },
+  { href: "/standard", label: "Open data" },
+  { href: "/join", label: "For officials" },
 ];
 
 export async function SiteHeader({ lga, demo, back }: { lga?: { id: string; name: string; state: string }; demo?: boolean; back?: string }) {

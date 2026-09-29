@@ -26,6 +26,10 @@ export const lgas = pgTable("lgas", {
   populationYear: integer("population_year"),
   populationSource: text("population_source"),
   wards: jsonb("wards").$type<string[]>().notNull().default([]),
+  areaKm2: doublePrecision("area_km2"),
+  createdYear: integer("created_year"),
+  senatorialDistrict: text("senatorial_district"),
+  factSources: jsonb("fact_sources").$type<Record<string, string>>().notNull().default({}),
   lat: doublePrecision("lat"),
   lng: doublePrecision("lng"),
   intro: text("intro"),
@@ -40,6 +44,7 @@ export const allocations = pgTable("allocations", {
   lgaId: text("lga_id").notNull().references(() => lgas.id),
   period: text("period").notNull(), // YYYY-MM
   grossNgn: bigint("gross_ngn", { mode: "number" }),
+  deductionsNgn: bigint("deductions_ngn", { mode: "number" }),
   netNgn: bigint("net_ngn", { mode: "number" }),
   source: text("source").notNull(),
   sourceUrl: text("source_url"),

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageHead } from "@/components/PageHead";
 import { insights } from "@/lib/national";
 import { formatDate } from "@/lib/format";
 
@@ -16,18 +17,28 @@ export default async function Insights() {
   return (
     <>
       <SiteHeader back="/insights" />
-      <main id="main" className="wrap py-12 grid gap-8">
-        <section className="measure grid gap-3">
-          <h1>What Nigerians ask their local governments</h1>
-          <p>Since {formatDate(d.since)}: {Number(d.totals.asked)} questions across {Number(d.totals.lgas)} LGAs, {pct(d.totals.answered, d.totals.asked)} answered from approved records. Questions are stored without personal details, and only questions asked more than once are listed here, so no one&apos;s individual question appears.</p>
-        </section>
+      <main id="main">
+        <PageHead
+          crumbs={[{ href: "/", label: "Nigeria" }]}
+          eyebrow="Demand signal"
+          title="What Nigerians ask their local governments"
+          lede="Questions are stored without personal details, and only questions asked more than once are listed, so no one's individual question appears."
+        >
+          <dl className="fact-strip">
+            <div><dt>Since</dt><dd>{formatDate(d.since)}</dd></div>
+            <div><dt>Questions</dt><dd>{Number(d.totals.asked)}</dd></div>
+            <div><dt>Local governments asked</dt><dd>{Number(d.totals.lgas)}</dd></div>
+            <div><dt>Answered from records</dt><dd>{pct(d.totals.answered, d.totals.asked)}</dd></div>
+          </dl>
+        </PageHead>
+        <div className="wrap py-12 grid gap-10">
 
         <section className="grid gap-6 md:grid-cols-2">
           <div className="grid gap-2">
             <h2>By state</h2>
             {d.byState.length === 0 ? <p className="muted">No questions yet.</p> : (
-              <table><thead><tr><th>State</th><th>Asked</th><th>Answered</th><th>LGAs</th></tr></thead><tbody>
-                {d.byState.map((r) => <tr key={r.state}><td>{r.state}<span className="small muted"> {r.zone}</span></td><td>{r.asked}</td><td>{pct(r.answered, r.asked)}</td><td>{r.lgas}</td></tr>)}
+              <table className="data-table"><thead><tr><th>State</th><th className="num">Asked</th><th className="num">Answered</th><th className="num">LGAs</th></tr></thead><tbody>
+                {d.byState.map((r) => <tr key={r.state}><td>{r.state}<span className="small muted"> {r.zone}</span></td><td className="num">{r.asked}</td><td className="num">{pct(r.answered, r.asked)}</td><td className="num">{r.lgas}</td></tr>)}
               </tbody></table>
             )}
           </div>
@@ -52,6 +63,7 @@ export default async function Insights() {
         </section>
 
         <p className="small muted measure">Counts refresh live. For the per-LGA view see the <Link href="/scoreboard">scoreboard</Link>; for the data itself see the <Link href="/api/catalogue.json">catalogue</Link>.</p>
+        </div>
       </main>
       <SiteFooter />
     </>

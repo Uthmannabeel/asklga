@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageHead } from "@/components/PageHead";
 import { scoreboard } from "@/lib/national";
 import { formatDate } from "@/lib/format";
 
@@ -14,24 +15,27 @@ export default async function Scoreboard() {
   return (
     <>
       <SiteHeader back="/scoreboard" />
-      <main id="main" className="wrap py-12 grid gap-6">
-        <section className="measure grid gap-3">
-          <h1>Scoreboard</h1>
-          <p>Every LGA that has published records or received questions, with what can be measured about it. Accuracy is the share of a fixed set of test questions the answer service got right against that LGA&apos;s records, re-run after changes; <Link href="/about-answers">how answers are checked</Link>.</p>
-        </section>
+      <main id="main">
+        <PageHead
+          crumbs={[{ href: "/", label: "Nigeria" }]}
+          eyebrow="Accountability"
+          title="Scoreboard"
+          lede="Every council that has published records or received questions, with what can be measured about it. Accuracy is the share of a fixed set of test questions the answer service got right against that council's records, re-run after changes."
+        />
+        <div className="wrap py-12 grid gap-6">
         {rows.length === 0 ? <p className="muted">No LGA has published records yet.</p> : (
           <div className="table-scroll">
-            <table>
-              <thead><tr><th>LGA</th><th>State</th><th>Approved records</th><th>Questions, 30 days</th><th>Answered</th><th>Open gaps</th><th>Measured accuracy</th></tr></thead>
+            <table className="data-table">
+              <thead><tr><th>Local government</th><th>State</th><th className="num">Approved records</th><th className="num">Questions, 30 days</th><th className="num">Answered</th><th className="num">Open gaps</th><th>Measured accuracy</th></tr></thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id}>
                     <td><Link href={`/${r.id}`}>{r.name}</Link>{r.demo ? <span className="small muted"> (demo)</span> : null}</td>
                     <td>{r.state}</td>
-                    <td>{r.records}</td>
-                    <td>{r.asked30}</td>
-                    <td>{pct(r.answered30, r.asked30)}</td>
-                    <td>{r.openGaps}</td>
+                    <td className="num">{r.records}</td>
+                    <td className="num">{r.asked30}</td>
+                    <td className="num">{pct(r.answered30, r.asked30)}</td>
+                    <td className="num">{r.openGaps}</td>
                     <td>{r.accuracy != null ? <>{r.accuracy}% <span className="small muted">({r.evalCases} cases, {r.evalAt ? formatDate(r.evalAt) : ""})</span></> : <span className="muted">not yet run</span>}</td>
                   </tr>
                 ))}
@@ -39,7 +43,8 @@ export default async function Scoreboard() {
             </table>
           </div>
         )}
-        <p className="small muted measure">&quot;Answered&quot; means answered from approved records; a refusal is counted as not answered even when refusing was correct. Open gaps are distinct questions the LGA has not yet added a record for. Demo LGAs carry illustrative records and are marked.</p>
+        <p className="small muted measure">&quot;Answered&quot; means answered from approved records; a refusal is counted as not answered even when refusing was correct. Open gaps are distinct questions the LGA has not yet added a record for. Demo LGAs carry illustrative records and are marked. <Link href="/about-answers">How answers are checked</Link></p>
+        </div>
       </main>
       <SiteFooter />
     </>

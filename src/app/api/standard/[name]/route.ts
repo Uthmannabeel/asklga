@@ -107,6 +107,7 @@ const schemas: Record<string, object> = {
       lgaId: common.lgaId,
       period: { type: "string", pattern: "^\\d{4}-\\d{2}$" },
       grossNgn: { type: ["integer", "null"], minimum: 0 },
+      deductionsNgn: { type: ["integer", "null"], minimum: 0 },
       netNgn: { type: ["integer", "null"], minimum: 0 },
       source: { type: "string" },
       sourceUrl: { type: ["string", "null"], format: "uri" },

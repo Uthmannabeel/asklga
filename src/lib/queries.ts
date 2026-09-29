@@ -1,13 +1,15 @@
+import { cache } from "react";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb, schema as s } from "@/db";
 
 export type Scope = "public" | "internal";
 
-export async function getLga(id: string) {
+/** Cached per request: the layout, the shell, metadata and the page all ask for the same row. */
+export const getLga = cache(async (id: string) => {
   const db = await getDb();
   const rows = await db.select().from(s.lgas).where(eq(s.lgas.id, id)).limit(1);
   return rows[0] ?? null;
-}
+});
 
 export async function listLgas() {
   const db = await getDb();

@@ -7,7 +7,7 @@ export function SiteFooter({ lead }: { lead?: React.ReactNode }) {
     <footer className="site-footer">
       <div className="wrap py-12 grid gap-10">
         {lead ? <div className="measure">{lead}</div> : null}
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div className="grid gap-3 content-start max-w-sm">
             <Link href="/" className="wordmark" aria-label="AskLGA home"><Mark /><span>AskLGA</span></Link>
             <p>
@@ -18,8 +18,9 @@ export function SiteFooter({ lead }: { lead?: React.ReactNode }) {
             <h2>For residents</h2>
             <ul>
               <li><Link href="/">Find your LGA</Link></li>
+              <li><Link href="/money">Money to local governments</Link></li>
+              <li><Link href="/compare">Compare LGAs</Link></li>
               <li><Link href="/about-answers">How answers are checked</Link></li>
-              <li><Link href="/privacy">Privacy</Link></li>
             </ul>
           </div>
           <div>
@@ -36,6 +37,15 @@ export function SiteFooter({ lead }: { lead?: React.ReactNode }) {
             <ul>
               <li><Link href="/join">Join as an LGA</Link></li>
               <li><Link href="/admin">Staff sign-in</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h2>About</h2>
+            <ul>
+              <li><Link href="/about">About AskLGA</Link></li>
+              <li><Link href="/about#sources">Data sources</Link></li>
+              <li><Link href="/about#contact">Contact</Link></li>
+              <li><Link href="/privacy">Privacy</Link></li>
             </ul>
           </div>
         </div>

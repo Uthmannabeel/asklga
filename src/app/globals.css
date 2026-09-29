@@ -297,3 +297,83 @@ th { font-weight: 700; color: var(--muted); }
 .wrap.measure > * { max-width: var(--measure); }
 /* The specimen card sits inside the dark band but is paper: restore paper colours. */
 .band .specimen .eyebrow, .band .specimen .muted { color: var(--muted); }
+
+/* ---------- Maps ---------- */
+.state-map { width: 100%; height: auto; max-height: 34rem; display: block; }
+.lga-shape { fill: #e9ece7; stroke: #ffffff; stroke-width: 1.1; stroke-linejoin: round; transition: fill 120ms; vector-effect: non-scaling-stroke; }
+.lga-shape.is-lit { fill: #b9dcc6; }
+.lga-shape.is-focus { fill: var(--civic); stroke: var(--ink); stroke-width: 1.6; }
+a:hover > .lga-shape:not(.is-focus), a:focus-visible > .lga-shape:not(.is-focus) { fill: #cfd7cd; }
+a:focus-visible > .lga-shape { stroke: #f2b705; stroke-width: 3; }
+.locator .loc-off { fill: #dfe4dd; stroke: #fff; stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+.locator .loc-on { fill: var(--civic); stroke: #fff; stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+
+/* ---------- Page header ---------- */
+.page-head { background: var(--canvas); border-bottom: 1px solid var(--rule); }
+.page-head .crumbs { font-size: 0.88rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.page-head .crumbs a { color: var(--ink-2); }
+
+/* ---------- Chips (filters) ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 36px; padding: 0.3rem 0.8rem; border: 1px solid var(--rule-strong); border-radius: 999px; color: var(--ink); text-decoration: none; font-size: 0.9rem; background: var(--paper); }
+.chip:hover { border-color: var(--ink); color: var(--ink); text-decoration: none; }
+.chip[aria-current="page"], .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip .n { color: var(--muted); font-family: var(--font-mono), monospace; font-size: 0.8rem; }
+.chip[aria-current="page"] .n { color: #c9d3cc; }
+
+/* ---------- Data tables ---------- */
+.data-table { font-size: 0.95rem; }
+.data-table thead th { font-size: 0.8rem; font-weight: 700; color: var(--muted); border-bottom: 2px solid var(--ink); padding-bottom: 0.5rem; white-space: nowrap; }
+.data-table td, .data-table th { padding-block: 0.65rem; }
+.data-table .num { text-align: right; font-family: var(--font-mono), monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.data-table tbody tr:hover { background: var(--canvas); }
+.data-table .up { color: var(--civic); }
+.data-table .down { color: var(--danger); }
+.data-table td a { font-weight: 700; }
+
+/* ---------- Charts ---------- */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .bar { fill: var(--civic); }
+.chart .bar.is-last { fill: var(--band); }
+.chart .axis { stroke: var(--rule-strong); stroke-width: 1; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 2 3; }
+.chart text { font-family: var(--font-mono), monospace; font-size: 11px; fill: var(--muted); }
+.chart .bar-hit:hover + .bar, .chart .bar-hit:focus + .bar { fill: var(--civic-deep); }
+
+/* ---------- Big figure ---------- */
+.figure-n { font-family: var(--font-mono), monospace; font-weight: 700; font-size: clamp(1.9rem, 1.3rem + 2vw, 3rem); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.delta { font-family: var(--font-mono), monospace; font-size: 0.9rem; }
+.delta.up { color: var(--civic); }
+.delta.down { color: var(--danger); }
+
+/* ---------- Record meta line (replaces boxed compact stamps in lists) ---------- */
+.meta-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; font-size: 0.84rem; color: var(--muted); }
+.meta-line .id { font-family: var(--font-mono), monospace; color: var(--ink-2); }
+.meta-line .ok { color: var(--civic); font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; }
+.meta-line .warn { color: var(--caution); font-weight: 700; }
+
+/* ---------- Record cards in registers ---------- */
+.record-title { font-size: 1.1rem; font-weight: 700; color: var(--ink); text-decoration: none; }
+a.record-title:hover { color: var(--civic); text-decoration: underline; }
+.empty { border: 1px dashed var(--rule-strong); border-radius: 6px; padding: 1.5rem; display: grid; gap: 0.6rem; background: var(--paper); }
+.kv { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; }
+.kv > dt, .kv > dd { padding: 0.65rem 0; border-bottom: 1px solid var(--rule); }
+.kv > dt { color: var(--muted); font-size: 0.92rem; padding-right: 1rem; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv > dt { border-bottom: 0; padding-bottom: 0; } }
+.steps-list { counter-reset: s; display: grid; gap: 0.75rem; }
+.steps-list li { counter-increment: s; display: grid; grid-template-columns: 2rem 1fr; gap: 0.75rem; align-items: start; }
+.steps-list li::before { content: counter(s); font-family: var(--font-mono), monospace; font-weight: 700; width: 2rem; height: 2rem; border-radius: 999px; border: 1.5px solid var(--civic); color: var(--civic); display: grid; place-items: center; font-size: 0.9rem; }
+@media print { .site-header, .lga-bar, .site-footer, .lang-menu, .demo-banner { display: none; } }
+
+/* ---------- Long-form reading pages ---------- */
+.prose { max-width: var(--measure); display: grid; gap: 1rem; color: var(--ink-2); font-size: 1.04rem; line-height: 1.7; }
+.prose h2 { color: var(--ink); font-size: 1.4rem; margin-top: 1.5rem; }
+.prose h2:first-child { margin-top: 0; }
+.prose strong { color: var(--ink); }
+.prose ul { list-style: disc; padding-left: 1.25rem; display: grid; gap: 0.4rem; }
+.toc { position: sticky; top: 1rem; display: grid; gap: 0.4rem; font-size: 0.92rem; }
+.toc a { color: var(--ink-2); text-decoration: none; }
+.toc a:hover { color: var(--civic); text-decoration: underline; }
+.lga-shape { fill: #dde3dc; }
+.lga-label { font-family: var(--font-ui), sans-serif; font-size: 10px; fill: var(--ink-2); paint-order: stroke; stroke: rgba(255,255,255,0.85); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.lga-label.is-focus { font-weight: 700; font-size: 12px; fill: var(--ink); }

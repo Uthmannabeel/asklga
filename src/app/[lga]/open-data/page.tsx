@@ -1,41 +1,58 @@
+import Link from "next/link";
 import { LgaShell } from "@/components/LgaShell";
+import { LgaPageHead } from "@/components/LgaPageHead";
+import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Open data" };
 
+const SETS = [
+  ["projects", "Projects register", "Capital projects with sponsor, budget, contractor, status and evidence."],
+  ["assets", "Public assets inventory", "Health centres, schools, boreholes and markets with location and condition."],
+  ["services", "Service directory", "Eligibility, documents, steps, office and turnaround for each service."],
+  ["investment", "Investment profile", "Each approved section of the investor profile."],
+  ["allocations", "Federation allocations", "Every published FAAC month: gross, deductions and net, with source."],
+];
+
 export default async function OpenDataPage({ params }: { params: Promise<{ lga: string }> }) {
   const { lga } = await params;
-  const sets = [
-    ["projects", "Projects register"],
-    ["assets", "Public assets inventory"],
-    ["services", "Service directory"],
-    ["investment", "Investment profile"],
-    ["allocations", "Federation allocations by month"],
-  ];
   return (
-    <LgaShell lgaId={lga}>
-      <section className="grid gap-2 measure">
-        <h1>Open data</h1>
-        <p>Every approved register is downloadable and has a stable address. Journalists, researchers and other civic platforms may reuse it under the <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">Creative Commons Attribution 4.0 licence (CC BY 4.0)</a>: credit the LGA and this portal, and say if you changed the data.</p>
-        <p className="small muted">Each dataset carries its source, approval and last-verified fields per record. The JSON response includes the licence text and the generation time. Rows are approved records only; draft records are never included.</p>
+    <LgaShell
+      lgaId={lga}
+      hero={
+        <LgaPageHead
+          lgaId={lga}
+          title="Open data"
+          lede="Every approved register has a stable address in JSON and CSV. Reuse it under CC BY 4.0: credit the council and AskLGA, and say if you changed the data."
+        />
+      }
+    >
+      <section className="grid gap-3">
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead><tr><th>Dataset</th><th>What is in it</th><th>Download</th></tr></thead>
+            <tbody>
+              {SETS.map(([key, label, desc]) => (
+                <tr key={key}>
+                  <td><strong>{label}</strong></td>
+                  <td style={{ color: "var(--ink-2)" }}>{desc}</td>
+                  <td className="whitespace-nowrap">
+                    <a href={`/api/${lga}/open/${key}.json`} className="chip" style={{ marginRight: "0.4rem" }}>JSON</a>
+                    <a href={`/api/${lga}/open/${key}.csv`} className="chip">CSV</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="small muted measure">Rows are approved records only; drafts are never included. Each record carries its source, approval and last-verified fields. The JSON response includes the licence and when it was generated. Field definitions are in the <Link href="/standard">LGA Record Standard</Link>, and every published dataset is listed in the <a href="/api/catalogue.json">data catalogue</a>.</p>
       </section>
-      <table className="max-w-2xl">
-        <thead><tr><th>Dataset</th><th>JSON</th><th>CSV</th></tr></thead>
-        <tbody>
-          {sets.map(([key, label]) => (
-            <tr key={key}>
-              <td>{label}</td>
-              <td><a href={`/api/${lga}/open/${key}.json`}>{key}.json</a></td>
-              <td><a href={`/api/${lga}/open/${key}.csv`}>{key}.csv</a></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <section className="grid gap-2 measure">
-        <h2>Put the ask box on your own website</h2>
-        <p>States and LGAs that already have a website can add the same ask box with one line. It loads in a frame, so nothing else on the page changes.</p>
-        <pre className="small" style={{ background: "var(--canvas)", padding: "0.75rem", borderRadius: 2, overflowX: "auto" }}>
-          {`<script src="${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/widget.js" data-lga="${lga}" async></script>`}
+
+      <section className="grid gap-3 measure" style={{ maxWidth: "48rem" }}>
+        <h2 style={{ fontSize: "1.4rem" }}>Put the ask box on your own website</h2>
+        <p style={{ color: "var(--ink-2)" }}>A state or council that already has a website can add the same ask box with one line. It loads in a frame, so nothing else on the page changes.</p>
+        <pre className="small mono" style={{ background: "var(--band)", color: "#dfe9e2", padding: "1rem 1.1rem", borderRadius: 6, overflowX: "auto" }}>
+          {`<script src="${SITE_URL}/widget.js" data-lga="${lga}" async></script>`}
         </pre>
       </section>
     </LgaShell>

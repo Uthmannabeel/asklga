@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageHead } from "@/components/PageHead";
 
 export const metadata = { title: "The LGA Record Standard" };
 
@@ -91,13 +92,16 @@ export default function StandardPage() {
   return (
     <>
       <SiteHeader back="/standard" />
-      <main id="main" className="wrap py-12 grid gap-8">
-        <section className="measure grid gap-3">
-          <h1>The LGA Record Standard</h1>
-          <p className="text-lg">One way for every local government in Nigeria to publish what it does, what it built, what it owns and what it received, so that residents, journalists, investors and other platforms can read it, reuse it and check it.</p>
-          <p>Version 1, September 2026. Open for comment. Reference implementation: this portal. Machine-readable schemas: <Link href="/api/standard/projects.schema.json">projects</Link>, <Link href="/api/standard/assets.schema.json">assets</Link>, <Link href="/api/standard/services.schema.json">services</Link>, <Link href="/api/standard/investment.schema.json">investment</Link>, <Link href="/api/standard/documents.schema.json">documents</Link>, <Link href="/api/standard/allocations.schema.json">allocations</Link>. Catalogue of everything published: <Link href="/api/catalogue.json">catalogue.json</Link> (DCAT).</p>
-        </section>
-
+      <main id="main">
+        <PageHead
+          crumbs={[{ href: "/", label: "Nigeria" }]}
+          eyebrow="Open standard · Version 1, September 2026"
+          title="The LGA Record Standard"
+          lede="One way for every local government in Nigeria to publish what it does, what it built, what it owns and what it received, so residents, journalists, investors and other platforms can read it, reuse it and check it."
+        >
+          <p className="small" style={{ color: "var(--ink-2)" }}>Open for comment. Reference implementation: this portal. Machine-readable schemas: <Link href="/api/standard/projects.schema.json">projects</Link>, <Link href="/api/standard/assets.schema.json">assets</Link>, <Link href="/api/standard/services.schema.json">services</Link>, <Link href="/api/standard/investment.schema.json">investment</Link>, <Link href="/api/standard/documents.schema.json">documents</Link>, <Link href="/api/standard/allocations.schema.json">allocations</Link>. Everything published: <Link href="/api/catalogue.json">catalogue.json</Link> (DCAT).</p>
+        </PageHead>
+        <div className="wrap py-12 grid gap-10">
         <section className="measure grid gap-3">
           <h2>Five rules</h2>
           <ol className="list-decimal pl-5 grid gap-2">
@@ -124,11 +128,12 @@ export default function StandardPage() {
 
         <section id="allocations" className="grid gap-3">
           <h2>Federation allocations</h2>
-          <p className="measure">One row per LGA per month from the published Federation Account tables. The portal publishes what was published; it never computes or adjusts a figure.</p>
+          <p className="measure">One row per LGA per month from the published Federation Account tables. The portal publishes what was published; it never adjusts a published figure. Totals, month-on-month change and ranks shown on pages are calculated from the published figures and labelled as such.</p>
           <div className="table-scroll"><table className="max-w-3xl"><thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead><tbody>
             <tr><td><code>lgaId</code></td><td>string</td><td>The LGA&apos;s slug on the national directory.</td></tr>
             <tr><td><code>period</code></td><td>YYYY-MM</td><td>The month the allocation is for.</td></tr>
             <tr><td><code>grossNgn</code></td><td>integer, optional</td><td>The LGA&apos;s share before deductions, in naira.</td></tr>
+            <tr><td><code>deductionsNgn</code></td><td>integer, optional</td><td>Statutory deductions between gross and net, when the published table shows them.</td></tr>
             <tr><td><code>netNgn</code></td><td>integer, optional</td><td>The amount paid after statutory deductions, in naira.</td></tr>
             <tr><td><code>source, sourceUrl</code></td><td>string</td><td>The published table the row was taken from.</td></tr>
           </tbody></table></div>
@@ -136,9 +141,10 @@ export default function StandardPage() {
 
         <section className="measure grid gap-2">
           <h2>How to adopt it</h2>
-          <p>An LGA adopts the standard by publishing its registers in this shape, on this portal or on its own site, with the JSON and CSV addresses above. A state adopts it by asking its LGAs to do so and by embedding the ask box on the state website. A civic platform adopts it by reading the catalogue. Comments and proposed changes go through the project&apos;s public repository.</p>
+          <p>An LGA adopts the standard by publishing its registers in this shape, on this portal or on its own site, with the JSON and CSV addresses above. A state adopts it by asking its LGAs to do so and by embedding the ask box on the state website. A civic platform adopts it by reading the catalogue. Comments and proposed changes are welcome: see <Link href="/about#contact">contact</Link>.</p>
           <p className="small muted"><Link href="/">Back to the directory</Link></p>
         </section>
+        </div>
       </main>
       <SiteFooter />
     </>

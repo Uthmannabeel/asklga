@@ -5,7 +5,8 @@ import { LgaFinder, type FinderRow } from "@/components/LgaFinder";
 import { NigeriaMap } from "@/components/NigeriaMap";
 import { AnswerSpecimen } from "@/components/AnswerSpecimen";
 import { directory, nationalSummary } from "@/lib/national";
-import { stateLabel, tileByCode } from "@/lib/ngTiles";
+import { TILES, stateLabel, stateSlug, tileByCode } from "@/lib/ngTiles";
+import { month, naira, nairaShort, periodLabel, periods } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -27,6 +28,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
   const finderRows: FinderRow[] = rows.map((r) => [r.id, r.name, r.state, r.records > 0 ? 1 : 0]);
   const stateRows = tile ? rows.filter((r) => r.state === tile.state) : [];
   const publishing = rows.filter((r) => r.records > 0);
+  const latestPeriod = (await periods())[0];
+  const monthRows = latestPeriod ? await month(latestPeriod) : [];
+  const money = latestPeriod && monthRows.length
+    ? {
+        period: latestPeriod,
+        total: monthRows.reduce((n, r) => n + r.value, 0),
+        count: monthRows.length,
+        top: monthRows.slice(0, 5),
+        perHead: monthRows.filter((r) => r.perHead != null).sort((a, b) => b.perHead! - a.perHead!).slice(0, 5),
+      }
+    : null;
 
   return (
     <>
@@ -42,7 +54,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
                 Find your area, then ask about a service, a project or public money in English, Pidgin, Hausa, Yoruba or Igbo. Answers come only from records your council has approved, and each one shows you which records it used.
               </p>
               <div className="max-w-xl">
-                <LgaFinder rows={finderRows} label="Which local government area do you live in?" />
+                <LgaFinder rows={finderRows} states={TILES.map((t) => ({ slug: stateSlug(t.state), label: stateLabel(t.state) }))} label="Which local government area do you live in?" />
               </div>
               <p className="small muted">
                 Not sure? <Link href="#map">Pick your state on the map</Link>. Or try the demo council, <Link href={`/${demoId}`}>{demo?.name ?? "Obio/Akpor"}</Link>.
@@ -101,6 +113,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
                       <Link href="/#map" scroll={false} className="small">Clear</Link>
                     </div>
                     <p className="small muted">{stateRows.length} local government areas, {stateRows.filter((r) => r.records > 0).length} publishing records.</p>
+                    <Link href={`/state/${stateSlug(tile.state)}`} className="btn btn-sm justify-self-start">Open the {stateLabel(tile.state)} page</Link>
                     <ul className="grid gap-x-6 sm:grid-cols-2" style={{ columnGap: "1.5rem" }}>
                       {stateRows.map((r) => (
                         <li key={r.id} style={{ borderTop: "1px solid var(--rule)" }}>
@@ -137,6 +150,36 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
             </div>
           </div>
         </section>
+
+        {/* 3b. Money: only once published FAAC months are loaded. */}
+        {money ? (
+          <section className="wrap py-16 md:py-20 grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+            <div className="grid gap-3 content-start">
+              <p className="eyebrow">Federation Account (FAAC), {periodLabel(money.period, true)}</p>
+              <h2>Follow the money to every council</h2>
+              <p className="lede">{nairaShort(money.total)} went to {money.count} local governments this month. See what yours received, month by month, and how it compares.</p>
+              <div className="flex flex-wrap gap-3 mt-2">
+                <Link href="/money" className="btn">Allocations across Nigeria</Link>
+                <Link href="/compare" className="btn btn-quiet">Compare councils</Link>
+              </div>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {([["Highest this month", money.top], ...(money.perHead.length ? [["Most per resident", money.perHead]] : [])] as [string, typeof money.top][]).map(([h, list]) => (
+                <div key={h as string} className="grid gap-2 content-start">
+                  <p className="font-bold">{h as string}</p>
+                  <ol className="register">
+                    {(list as typeof money.top).map((r, i) => (
+                      <li key={r.id} className="flex items-baseline justify-between gap-3" style={{ padding: "0.6rem 0" }}>
+                        <span><span className="mono muted small">{i + 1}</span> <Link href={`/${r.id}/money`}>{r.name}</Link> <span className="small muted">{r.state}</span></span>
+                        <span className="mono small">{h === "Most per resident" ? naira(r.perHead) : nairaShort(r.value)}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {/* 4. What a page gives you. */}
         <section className="wrap py-16 md:py-20 grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">

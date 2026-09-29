@@ -45,5 +45,9 @@ export const TILES: Tile[] = [
   { code: "AK", state: "Akwa Ibom", col: 4, row: 6 },
 ];
 
-export const tileByCode = (code: string | undefined) => (code ? TILES.find((t) => t.code === code.toUpperCase()) : undefined);
+/** URL slug for a state page: /state/akwa-ibom, /state/fct. */
+export const stateSlug = (state: string) => (state === "Federal Capital Territory" ? "fct" : state.toLowerCase().replace(/\s+/g, "-"));
+export const tileBySlug = (slug: string) => TILES.find((t) => stateSlug(t.state) === slug.toLowerCase());
+
+export const tileByCode =(code: string | undefined) => (code ? TILES.find((t) => t.code === code.toUpperCase()) : undefined);
 export const stateLabel = (state: string) => (state === "Federal Capital Territory" ? state : `${state} State`);
