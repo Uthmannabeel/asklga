@@ -13,6 +13,7 @@ import { ledger, naira, nairaShort, periodLabel, rankFor } from "@/lib/money";
 import { lgaFacts } from "@/lib/facts";
 import { codeForState } from "@/lib/geo";
 import { stateLabel, stateSlug } from "@/lib/ngTiles";
+import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
           ) : null}
         </div>
         {code ? (
-          <div className="grid gap-3 lg:justify-self-end w-full max-w-md">
+          <div className="hidden lg:grid gap-3 lg:justify-self-end w-full max-w-md">
             <StateMap code={code} names={names} focus={lga} lit={siblings.filter((s) => s.records > 0).map((s) => s.id)} label={`Map of ${stateLabel(row.state)} with ${row.name} highlighted`} />
           </div>
         ) : null}
@@ -74,8 +75,18 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
     </section>
   );
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "AdministrativeArea",
+    name: `${row.name} Local Government Area`,
+    alternateName: row.name,
+    containedInPlace: { "@type": "AdministrativeArea", name: stateLabel(row.state), containedInPlace: { "@type": "Country", name: "Nigeria" } },
+    ...(row.lat != null && row.lng != null ? { geo: { "@type": "GeoCoordinates", latitude: row.lat, longitude: row.lng } } : {}),
+    url: `${SITE_URL}/${lga}`,
+  };
+
   return (
-    <LgaShell lgaId={lga} hero={hero}>
+    <LgaShell lgaId={lga} hero={<>{hero}<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} /></>}>
       <section className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start">
         <div className="panel">
           <AskBox lgaId={lga} t={t} lang={lang} />
@@ -175,6 +186,13 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
             </ul>
             <p className="small"><Link href={`/${lga}/services`}>{fill(t.home.allServices, services.length)}</Link></p>
           </div>
+        </section>
+      ) : null}
+
+      {code ? (
+        <section className="lg:hidden grid gap-2" lang="en">
+          <h2 style={{ fontSize: "1.3rem" }}>Where {row.name} is</h2>
+          <StateMap code={code} names={names} focus={lga} lit={siblings.filter((s) => s.records > 0).map((s) => s.id)} label={`Map of ${stateLabel(row.state)} with ${row.name} highlighted`} labels="focus" />
         </section>
       ) : null}
 

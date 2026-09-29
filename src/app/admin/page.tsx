@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { activeUserCount, currentStaff, passcodeConfigured } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { listLgas } from "@/lib/queries";
+import { directory } from "@/lib/national";
 import { signInAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminHome({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
+export default async function AdminHome({ searchParams }: { searchParams: Promise<{ error?: string; next?: string; open?: string }> }) {
   const session = await currentStaff();
-  const { error, next } = await searchParams;
+  const { error, next, open } = await searchParams;
+  if (session && open && /^[a-z0-9-]+$/.test(open)) redirect(`/admin/${open}`);
   if (!session) {
     const users = await activeUserCount();
     const bootstrap = users === 0;
@@ -53,10 +56,15 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       </section>
     );
   }
-  const lgas = (await listLgas()).filter((l) => session.lgaId === null || l.id === session.lgaId);
+  const all = (await listLgas()).filter((l) => session.lgaId === null || l.id === session.lgaId);
+  // A server administrator sees councils that have records first, and a picker for the rest.
+  const records = new Map((await directory()).map((d) => [d.id, d.records]));
+  const active = all.filter((l) => l.demo || (records.get(l.id) ?? 0) > 0);
+  const lgas = all.length === 1 ? all : active;
+  const states = [...new Set(all.map((l) => l.state))].sort();
   return (
-    <section className="grid gap-3">
-      <h1>{lgas.length === 1 ? "Your local government area" : "Choose a local government area"}</h1>
+    <section className="grid gap-5">
+      <h1>{all.length === 1 ? "Your local government area" : "Choose a local government area"}</h1>
       {session.bootstrap ? (
         <div className="stamp stamp-caution">
           <div><strong>Setup mode</strong></div>
@@ -65,14 +73,36 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       ) : null}
       {error === "lga" ? <p className="small" role="alert" style={{ color: "var(--danger)" }}>Your account is not for that LGA.</p> : null}
       {error === "role" ? <p className="small" role="alert" style={{ color: "var(--danger)" }}>Your role does not allow that action.</p> : null}
-      {lgas.length === 0 ? <p className="muted">No LGA is set up on this server yet.</p> : null}
-      <ul className="register">
-        {lgas.map((l) => (
-          <li key={l.id} className="register-row">
-            <Link href={`/admin/${l.id}`} className="text-lg">{l.name}, {l.state}</Link>
-          </li>
-        ))}
-      </ul>
+      {all.length === 0 ? <p className="muted">No LGA is set up on this server yet.</p> : null}
+      {lgas.length ? (
+        <div className="grid gap-2">
+          {all.length > 1 ? <p className="eyebrow">Councils with records</p> : null}
+          <ul className="register">
+            {lgas.map((l) => (
+              <li key={l.id} className="register-row">
+                <Link href={`/admin/${l.id}`} className="record-title">{l.name}, {l.state}</Link>
+                {all.length > 1 ? <span className="small muted">{records.get(l.id) ?? 0} approved records{l.demo ? ", demo" : ""}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {all.length > 1 ? (
+        <form method="get" action="/admin" className="panel flex flex-wrap items-end gap-3 max-w-2xl" style={{ padding: "1.25rem" }}>
+          <label className="grid gap-1 font-bold" style={{ flex: "1 1 16rem" }}>
+            Open any of the {all.length} councils
+            <select name="open" defaultValue="" required>
+              <option value="" disabled>Choose an LGA</option>
+              {states.map((st) => (
+                <optgroup key={st} label={st}>
+                  {all.filter((l) => l.state === st).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+          <button type="submit" className="btn">Open workspace</button>
+        </form>
+      ) : null}
     </section>
   );
 }

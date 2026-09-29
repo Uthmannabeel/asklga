@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "eval": "node scripts/eval.mjs",
-    "create-admin": "node scripts/create-admin.mjs"
+    "create-admin": "node scripts/create-admin.mjs",
+    "import-faac": "node scripts/import-faac.mjs",
+    "build-geo": "python scripts/geo/build_geo.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
