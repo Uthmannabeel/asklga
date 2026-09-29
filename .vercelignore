@@ -8,3 +8,5 @@ eval/results
 !.env.example
 Dockerfile
 docker-compose.yml
+scripts/data
+scripts/geo/boundaries
