@@ -26,7 +26,7 @@ export default async function Scoreboard() {
         {rows.length === 0 ? <p className="muted">No LGA has published records yet.</p> : (
           <div className="table-scroll">
             <table className="data-table">
-              <thead><tr><th>Local government</th><th>State</th><th className="num">Approved records</th><th className="num">Questions, 30 days</th><th className="num">Answered</th><th className="num">Open gaps</th><th>Measured accuracy</th></tr></thead>
+              <thead><tr><th>Local government</th><th>State</th><th className="num">Published records</th><th className="num">Questions, 30 days</th><th className="num">Answered</th><th className="num">Open gaps</th><th>Measured accuracy</th></tr></thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id}>
@@ -43,7 +43,7 @@ export default async function Scoreboard() {
             </table>
           </div>
         )}
-        <p className="small muted measure">&quot;Answered&quot; means answered from approved records; a refusal is counted as not answered even when refusing was correct. Open gaps are distinct questions the LGA has not yet added a record for. Demo LGAs carry illustrative records and are marked. <Link href="/about-answers">How answers are checked</Link></p>
+        <p className="small muted measure">&quot;Answered&quot; means answered from published records; a refusal is counted as not answered even when refusing was correct. Open gaps are distinct questions the LGA has not yet added a record for. Demo LGAs carry illustrative records and are marked. Records compiled from public sources are labelled on the council&apos;s pages until the council confirms them. <Link href="/about-answers">How answers are checked</Link></p>
         </div>
       </main>
       <SiteFooter />

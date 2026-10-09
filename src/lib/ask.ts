@@ -81,12 +81,12 @@ export const LANGS = ["en", "pcm", "ha", "yo", "ig", "other"] as const;
 export type Lang = (typeof LANGS)[number];
 
 export const REFUSAL: Record<Lang, string> = {
-  en: "We don't have that in the approved records yet. You can ask a person at the secretariat, or leave your question so the LGA can add the answer.",
-  pcm: "We never get that one for the approved records. You fit ask person for secretariat, or leave your question make the LGA add the answer.",
+  en: "We don't have that in the published records yet. You can ask a person at the secretariat, or leave your question so the LGA can add the answer.",
+  pcm: "We never get that one for the published records. You fit ask person for secretariat, or leave your question make the LGA add the answer.",
   ha: "Ba mu da wannan bayanin a cikin rubuce-rubucen da aka amince da su tukuna. Za ka iya tambayar wani a sakatariya, ko ka bar tambayarka don ƙaramar hukuma ta ƙara amsar.",
   yo: "A kò tíì ní ìyẹn nínú àwọn àkọsílẹ̀ tí a fọwọ́ sí. O lè béèrè lọ́wọ́ ẹnìkan ní ilé ìgbìmọ̀, tàbí kí o fi ìbéèrè rẹ sílẹ̀ kí ìjọba ìbílẹ̀ lè fi ìdáhùn kún un.",
   ig: "Anyị enwebeghị nke ahụ n'ime ndekọ akwadoro. Ị nwere ike ịjụ mmadụ na sekretarịat, ma ọ bụ hapụ ajụjụ gị ka gọọmentị ime obodo tinye azịza ya.",
-  other: "We don't have that in the approved records yet. You can ask a person at the secretariat, or leave your question so the LGA can add the answer.",
+  other: "We don't have that in the published records yet. You can ask a person at the secretariat, or leave your question so the LGA can add the answer.",
 };
 
 const AnswerSchema = z.object({

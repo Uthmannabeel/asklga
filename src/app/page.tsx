@@ -11,7 +11,7 @@ import { month, naira, nairaShort, periodLabel, periods } from "@/lib/money";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: { absolute: "AskLGA: ask your local government, get the official answer" },
-  description: "Every one of Nigeria's 774 local government areas has a page. Ask about services, projects, public assets and money in English, Pidgin, Hausa, Yoruba or Igbo, and see the approved record behind every answer.",
+  description: "Every one of Nigeria's 774 local government areas has a page. Ask about services, projects, public assets and money in English, Pidgin, Hausa, Yoruba or Igbo, and see the published record behind every answer.",
 };
 
 const Arrow = () => (
@@ -51,7 +51,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
               <p className="eyebrow">For all 774 local government areas in Nigeria</p>
               <h1>Ask your local government. Get the official answer, and the record behind it.</h1>
               <p className="lede measure">
-                Find your area, then ask about a service, a project or public money in English, Pidgin, Hausa, Yoruba or Igbo. Answers come only from records your council has approved, and each one shows you which records it used.
+                Find your area, then ask about a service, a project or public money in English, Pidgin, Hausa, Yoruba or Igbo. Answers come only from records published for your council, each with its source, and every answer shows you which records it used.
               </p>
               <div className="max-w-xl">
                 <LgaFinder rows={finderRows} states={TILES.map((t) => ({ slug: stateSlug(t.state), label: stateLabel(t.state) }))} label="Which local government area do you live in?" />
@@ -84,7 +84,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
             <li className="step">
               <span className="step-num">03</span>
               <h3>Check where it came from</h3>
-              <p className="muted">Each answer lists the approved records it used. If no record covers your question, it says so and can pass it to an officer.</p>
+              <p className="muted">Each answer lists the records it used. If no record covers your question, it says so and can pass it to an officer.</p>
             </li>
           </ol>
         </section>
@@ -101,7 +101,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
               <div className="grid gap-4">
                 <NigeriaMap rows={rows} selected={tile?.code} />
                 <p className="small muted flex flex-wrap gap-x-5 gap-y-1">
-                  <span><span className="legend-dot" style={{ background: "var(--lit)" }} />Publishes approved records</span>
+                  <span><span className="legend-dot" style={{ background: "var(--lit)" }} />Publishing records</span>
                   <span><span className="legend-dot" style={{ background: "var(--unlit)" }} />Has a page, not yet joined</span>
                 </p>
               </div>
@@ -131,7 +131,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
                       <div className="stat"><dt className="stat-l">Local government areas</dt><dd className="stat-n">{sum.lgas}</dd></div>
                       <div className="stat"><dt className="stat-l">States, plus the FCT</dt><dd className="stat-n">{sum.states}</dd></div>
                       <div className="stat"><dt className="stat-l">Languages</dt><dd className="stat-n">5</dd></div>
-                      <div className="stat"><dt className="stat-l">Approved records</dt><dd className="stat-n">{sum.records}</dd></div>
+                      <div className="stat"><dt className="stat-l">Published records</dt><dd className="stat-n">{sum.records}</dd></div>
                     </dl>
                     <div className="grid gap-2" style={{ borderTop: "1px solid var(--rule)", paddingTop: "1.25rem" }}>
                       <p className="font-bold">Publishing now</p>
@@ -217,8 +217,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
             </div>
             <div>
               {[
-                ["Approved records only", <>The service answers from records the council&apos;s data owner has approved, never from the open web. <Link href="/about-answers">How answers are checked</Link></>],
-                ["Source on every answer", <>Each answer lists the record IDs it used, and each record shows who approved it and when it was last verified.</>],
+                ["Published records only", <>The service answers only from the records published for each council, never from the open web. A record shows Verified once the council confirms it. <Link href="/about-answers">How answers are checked</Link></>],
+                ["Source on every answer", <>Each answer lists the record IDs it used, and each record shows its source and whether the council has confirmed it.</>],
                 ["Accuracy in public", <>Answers are tested against a fixed set of test questions, and each council&apos;s latest score is published. <Link href="/scoreboard">See the scoreboard</Link></>],
                 ["Personal details removed", <>Names and phone numbers are stripped from questions before they are stored or sent anywhere. <Link href="/privacy">Privacy</Link></>],
                 ["Open standard", <>Records follow a published schema any LGA, state or developer can adopt. <Link href="/standard">The LGA Record Standard</Link></>],

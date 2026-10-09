@@ -105,7 +105,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
             <div className="grid gap-2">
               <p className="eyebrow">How answers work here</p>
               <p className="small" style={{ color: "var(--ink-2)" }}>
-                Answers come only from the {records} records {row.name} has approved. Each answer lists the records it used. If none cover your question, you will be told, and you can pass it to an officer.
+                Answers come only from the {records} records published for {row.name}, each with its source. Each answer lists the records it used. If none cover your question, you will be told, and you can pass it to an officer.
               </p>
               <p className="small"><Link href="/about-answers">How answers are checked</Link></p>
             </div>

@@ -78,7 +78,7 @@ export function AnswerSpecimen() {
           <p lang={ex.lang} style={{ lineHeight: 1.6 }}>{ex.a}</p>
         </div>
         <div>
-          <p className="eyebrow mb-1">From {ex.cites.length === 1 ? "this approved record" : "these approved records"}</p>
+          <p className="eyebrow mb-1">From {ex.cites.length === 1 ? "this record" : "these records"}</p>
           {ex.cites.map((c) => (
             <div key={c.id} className="cite">
               <span className="mono">{c.id}</span>

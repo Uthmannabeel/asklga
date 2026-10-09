@@ -44,9 +44,9 @@ export default function About() {
               <dt>National layer</dt>
               <dd>Every LGA has a page from day one, built from national public data: boundaries, census figures and federation allocations. These are shown as published and linked to their source.</dd>
               <dt>Council layer</dt>
-              <dd>When a council joins, its data owner approves its own records: services, projects, public assets, documents and an investment profile. Only approved records are public, and only they are used to answer questions.</dd>
+              <dd>When a council joins, its data owner approves its own records: services, projects, public assets, documents and an investment profile. Only approved records are public, and only they are used to answer questions. Before a council joins, AskLGA may publish records compiled from its website and dated public reports; each names its source, and the council&apos;s pages say they are not yet confirmed.</dd>
               <dt>Answers</dt>
-              <dd>The answer service reads only a council&apos;s approved records, cites the record IDs it used, and says so when nothing covers a question. <Link href="/about-answers">How answers are checked</Link></dd>
+              <dd>The answer service reads only a council&apos;s published records, cites the record IDs it used, and says so when nothing covers a question. <Link href="/about-answers">How answers are checked</Link></dd>
               <dt>Accuracy</dt>
               <dd>Answers are tested against a fixed set of questions and the results are published on the <Link href="/scoreboard">scoreboard</Link>.</dd>
             </dl>

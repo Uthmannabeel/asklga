@@ -5,13 +5,13 @@ import { PageHead } from "@/components/PageHead";
 
 export const metadata = {
   title: "How answers are checked",
-  description: "Five checks every AskLGA answer passes before you see it: personal details removed, approved records only, a citation on every answer, figures checked, and instruction attacks refused.",
+  description: "Five checks every AskLGA answer passes before you see it: personal details removed, published records only, a citation on every answer, figures checked, and instruction attacks refused.",
 };
 
 const CHECKS: [string, string][] = [
   ["Personal details are removed first", "Phone numbers, email addresses, identity numbers and \"my name is\" phrases are stripped from your question before it is stored or sent anywhere."],
-  ["Only approved records are used", "The answer service receives the council's approved registers and the passages from approved public documents that match your question. Drafts and internal documents are not included."],
-  ["Every answer must cite a record", "The answer names the record IDs it relied on. If it cannot cite a real, approved record, it is replaced with \"We don't have that in the approved records yet\"."],
+  ["Only published records are used", "The answer service receives the council's published registers and the passages from published public documents that match your question. Drafts and internal documents are not included."],
+  ["Every answer must cite a record", "The answer names the record IDs it relied on. If it cannot cite a real, published record, it is replaced with \"We don't have that in the approved records yet\"."],
   ["Figures are checked against the record", "Any number of four or more digits in an answer must appear in a cited record. Otherwise the answer is withheld and the question is logged for the council to fill."],
   ["Instructions hidden in questions are refused", "A question asking the service to ignore its records or to state a particular result is not sent to the model at all."],
 ];
@@ -25,7 +25,7 @@ export default function AboutAnswersPage() {
           crumbs={[{ href: "/", label: "Nigeria" }, { href: "/about", label: "About" }]}
           eyebrow="Accountability"
           title="How answers are checked"
-          lede="Every answer comes from records the council's data owner has approved: services, projects, public assets, the investment profile and public documents. The answer service cannot use anything else."
+          lede="Every answer comes from the records published for a council: services, projects, public assets, the investment profile and public documents. Each record names its source. The answer service cannot use anything else."
         />
         <div className="wrap py-12 grid gap-16">
           <section className="grid gap-8 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
@@ -55,7 +55,7 @@ export default function AboutAnswersPage() {
                 </div>
                 <figcaption className="small muted">The stamp on an Obio/Akpor record compiled from the council&apos;s website. When the council confirms it, the stamp reads Verified, with the date.</figcaption>
               </figure>
-              <p style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Verified</strong> on an answer means it passed all five checks and links to the records it used. On a record, the stamp shows the source, that the data owner approved it, and the date it was last confirmed. <strong style={{ color: "var(--ink)" }}>Not yet verified</strong> means the record is published but no confirmation date is on file.</p>
+              <p style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Verified</strong> on an answer means it passed all five checks and links to the records it used. On a record, the stamp shows the source and, once the council&apos;s data owner has confirmed it, the date it was last confirmed. <strong style={{ color: "var(--ink)" }}>Not yet verified</strong> means the record is published but no confirmation date is on file.</p>
             </div>
           </section>
 
