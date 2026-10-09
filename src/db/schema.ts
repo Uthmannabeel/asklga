@@ -34,6 +34,7 @@ export const lgas = pgTable("lgas", {
   lng: doublePrecision("lng"),
   intro: text("intro"),
   demo: boolean("demo").notNull().default(false),
+  compiled: boolean("compiled").notNull().default(false), // records from published sources, not yet council-confirmed
   joinedAt: timestamp("joined_at", { withTimezone: true }), // when the LGA's data owner first approved a record
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

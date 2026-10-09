@@ -4,36 +4,36 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 
 /**
- * Real answers returned by the live service for the Obio/Akpor demo records on 27 Sep 2026,
- * copied verbatim. Shown so a first-time visitor sees what an answer and its sources look like.
+ * Real answers returned by the answer service for the Obio/Akpor records on 9 Oct 2026, copied
+ * verbatim. Shown so a first-time visitor sees what an answer and its sources look like.
  */
 const EXAMPLES = [
   {
     key: "en",
     tab: "English",
     lang: "en",
-    q: "How do I register a business in Obio/Akpor and what does it cost?",
-    a: "To register a business in Obio/Akpor, submit your CAC certificate or business name, a utility bill or tenancy agreement, and your ID at the Revenue department. A revenue officer will inspect the premises. After that, collect your registration certificate. The records do not state the cost.",
-    cites: [{ id: "OBA-S-0003", kind: "Service", label: "Business premises registration" }],
+    q: "Has the new general hospital in Rumuigbo been commissioned?",
+    a: "Yes, the new General Hospital in Rumuigbo has been commissioned. It was commissioned in late August 2026, specifically scheduled for 27 August 2026 by the Rivers State Government.",
+    cites: [
+      { id: "OBA-P-0003", kind: "Project", label: "New General Hospital, Rumuigbo" },
+      { id: "OBA-D-0004", kind: "Notice", label: "State projects commissioned in Obio/Akpor, August 2026" },
+    ],
   },
   {
     key: "pcm",
     tab: "Pidgin",
     lang: "pcm",
-    q: "Wetin I go do to get market stall for Obio/Akpor?",
-    a: "To get market stall, you need to apply at the Markets unit. Your name go join the waiting list for that market, and the market master go notify you when stall free. Do not pay any person for stall.",
-    cites: [
-      { id: "OBA-S-0004", kind: "Service", label: "Market stall allocation" },
-      { id: "OBA-D-0002", kind: "Notice", label: "Council notice: market stall waiting lists" },
-    ],
+    q: "Wetin happen to the Okania-Ogbogoro road project?",
+    a: "Governor Fubara flag off the 5 km Okania-Ogbogoro road on 25 May 2024 with a five-month timeline, and dem pay 40% advance of N2.69 billion to the contractor, China Civil Engineering Construction Corporation (CCECC) Nigeria Ltd. Radio Nigeria report on 30 Sep 2025 say work stop during the six-month emergency rule and residents dey appeal make dem finish am.",
+    cites: [{ id: "OBA-P-0001", kind: "Project", label: "Okania–Ogbogoro road dualisation (5 km)" }],
   },
   {
     key: "ha",
     tab: "Hausa",
     lang: "ha",
-    q: "Ina ake yin rijistar haihuwa?",
-    a: "Ana yin rijistar haihuwa ta gaske a wurin Hukumar Kula da Yawan Jama'a ta Kasa (National Population Commission). Amma idan kuna son samun takardar shaida daga kananan hukumomi (birth attestation letter), ana yi a Ofishin Rijista da ke Sakatariyar Karamar Hukumar Rumuodomaya.",
-    cites: [{ id: "OBA-S-0005", kind: "Service", label: "Birth attestation letter" }],
+    q: "Ta yaya zan biya kuɗin kasuwa da harajin ƙaramar hukumar Obio/Akpor?",
+    a: "Za ka iya biyan kuɗin kasuwa da harajin ƙaramar hukuma ta hanyar amfani da shafin yanar gizon biyan kuɗi na majalisa wato TAMIS portal. Abin da za ka yi shi ne buɗe tamis.obioakpor.riversstateapps.ng, zaɓi nau'in harajin da kake so, sannan ka biya. Ofishin da abin ya shafa shi ne Revenue department a sakatariyar ƙaramar hukuma da ke Rumuodomaya, kuma za ka iya kiran lambar 0916 268 4923 daga Litinin zuwa Juma'a daga karfe takwas na safe zuwa shida na yamma.",
+    cites: [{ id: "OBA-S-0003", kind: "Service", label: "Pay council rates, levies and permits online (TAMIS)" }],
   },
 ] as const;
 
@@ -88,7 +88,7 @@ export function AnswerSpecimen() {
         </div>
       </div>
       <figcaption className="px-5 md:px-6 py-3 small muted" style={{ borderTop: "1px solid var(--rule)", background: "var(--canvas)" }}>
-        Real answers from the demo records. <Link href="/obio-akpor">Ask Obio/Akpor your own question</Link>
+        Real answers from records compiled from public sources. <Link href="/obio-akpor">Ask Obio/Akpor your own question</Link>
       </figcaption>
     </figure>
   );

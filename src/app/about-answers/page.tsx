@@ -49,12 +49,11 @@ export default function AboutAnswersPage() {
             <div className="grid gap-4">
               <figure className="grid gap-2" style={{ maxWidth: "26rem" }}>
                 <div className="stamp">
-                  <div><strong>Verified</strong> Record OBA-S-0003</div>
-                  <div>Source: Demo seed (illustrative). Not an official record.</div>
-                  <div>Approved by the data owner</div>
-                  <div>Last verified 20 Sep 2026</div>
+                  <div><span style={{ color: "var(--caution)", fontWeight: 700 }}>Not yet verified</span> Record OBA-S-0003</div>
+                  <div>Source: Compiled from public sources: Obio/Akpor council website, revenue schedule (Oct 2026). Not yet confirmed by the council.</div>
+                  <div>No verification date on file</div>
                 </div>
-                <figcaption className="small muted">The stamp on a demo record, Obio/Akpor business premises registration.</figcaption>
+                <figcaption className="small muted">The stamp on an Obio/Akpor record compiled from the council&apos;s website. When the council confirms it, the stamp reads Verified, with the date.</figcaption>
               </figure>
               <p style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Verified</strong> on an answer means it passed all five checks and links to the records it used. On a record, the stamp shows the source, that the data owner approved it, and the date it was last confirmed. <strong style={{ color: "var(--ink)" }}>Not yet verified</strong> means the record is published but no confirmation date is on file.</p>
             </div>

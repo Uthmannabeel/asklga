@@ -12,7 +12,7 @@ export async function LgaShell({ lgaId, children, back, hero }: { lgaId: string;
   const t = dict(await uiLang());
   return (
     <>
-      <SiteHeader lga={lga} demo={lga.demo} back={back} />
+      <SiteHeader lga={lga} demo={lga.demo} compiled={lga.compiled} back={back} />
       <main id="main">
         {hero}
         <div className="wrap py-10 grid gap-12">{children}</div>

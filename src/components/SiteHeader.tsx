@@ -12,7 +12,11 @@ const NATIONAL = [
   { href: "/join", label: "For officials" },
 ];
 
-export async function SiteHeader({ lga, demo, back }: { lga?: { id: string; name: string; state: string }; demo?: boolean; back?: string }) {
+// Shown in English on every language: the wording is a factual caveat that should not drift in translation.
+const COMPILED_BANNER =
+  "Records compiled by AskLGA from the council's website and dated public reports, each with its source. The council has not yet confirmed them.";
+
+export async function SiteHeader({ lga, demo, compiled, back }: { lga?: { id: string; name: string; state: string }; demo?: boolean; compiled?: boolean; back?: string }) {
   const lang: UiLang = await uiLang();
   const t = dict(lang);
   const returnTo = back ?? (lga ? `/${lga.id}` : "/");
@@ -21,6 +25,7 @@ export async function SiteHeader({ lga, demo, back }: { lga?: { id: string; name
     <>
       <a href="#main" className="skip-link">{t.skip}</a>
       {demo ? <div className="demo-banner" role="note"><div className="wrap">{t.demoBanner}</div></div> : null}
+      {compiled && !demo ? <div className="demo-banner" role="note" lang="en"><div className="wrap">{COMPILED_BANNER}</div></div> : null}
       {!REVIEWED[lang] ? <div className="demo-banner" role="note" lang="en"><div className="wrap">{t.pendingReview}</div></div> : null}
       <header className="site-header">
         <div className="wrap site-header-row">

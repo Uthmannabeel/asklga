@@ -50,7 +50,7 @@ export async function SourceStamp({
         {" "}{t.record} {id}
       </div>
       <div>{t.source}: {link ? <a href={link} rel="noopener">{source}</a> : source}</div>
-      <div>{t.approved}</div>
+      {verified ? <div>{t.approved}</div> : null}
       <div>{verified ? `${label} ${formatDate(lastVerified)}` : t.noDate}</div>
     </div>
   );

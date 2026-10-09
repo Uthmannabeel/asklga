@@ -57,7 +57,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
                 <LgaFinder rows={finderRows} states={TILES.map((t) => ({ slug: stateSlug(t.state), label: stateLabel(t.state) }))} label="Which local government area do you live in?" />
               </div>
               <p className="small muted">
-                Not sure? <Link href="#map">Pick your state on the map</Link>. Or try the demo council, <Link href={`/${demoId}`}>{demo?.name ?? "Obio/Akpor"}</Link>.
+                Not sure? <Link href="#map">Pick your state on the map</Link>. Or try the pilot council, <Link href={`/${demoId}`}>{demo?.name ?? "Obio/Akpor"}</Link>.
               </p>
             </div>
             <AnswerSpecimen />
@@ -185,7 +185,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
         <section className="wrap py-16 md:py-20 grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
           <div className="grid gap-3 content-start">
             <h2>What you will find on your LGA&apos;s page</h2>
-            <p className="lede">The same sections for every council, so you always know where to look. See them on the demo council.</p>
+            <p className="lede">The same sections for every council, so you always know where to look. See them on the pilot council.</p>
           </div>
           <ul className="task-list">
             {[
