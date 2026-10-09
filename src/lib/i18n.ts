@@ -73,7 +73,7 @@ const en = {
   searchModeNote: "Search mode: internal documents are matched by keyword on this server and are not sent to the model provider.",
   stamp: { verified: "Verified", notVerified: "Not yet verified", record: "record", source: "Source", approved: "Approved for publication by the LGA data owner", lastVerified: "Last verified", added: "Added", noDate: "No verification date on file" },
   footer: {
-    answersFrom: "Answers come only from records approved by the LGA data owner. Records are open data under CC BY 4.0; see the Open data page.",
+    answersFrom: "Answers come only from the records published for this council, each with its source. Records are open data under CC BY 4.0; see the Open data page.",
     howChecked: "How answers are checked",
     privacy: "Privacy",
     staffWorkspace: "Staff workspace",
@@ -151,7 +151,7 @@ const pcm: Dict = {
   searchModeNote: "Search mode: we dey match internal documents by keyword for dis server; we no dey send dem go di model provider.",
   stamp: { verified: "Verified", notVerified: "Never verify", record: "record", source: "Source", approved: "Di LGA data owner don approve am make people see am", lastVerified: "Last verified", added: "Added", noDate: "No verification date for file" },
   footer: {
-    answersFrom: "Answers dey come only from records wey di LGA data owner don approve. Di records na open data under CC BY 4.0; check di Open data page.",
+    answersFrom: "Answers dey come only from di records wey dem publish for dis council, each one with im source. Di records na open data under CC BY 4.0; check di Open data page.",
     howChecked: "How we dey check answers",
     privacy: "Privacy",
     staffWorkspace: "Staff workspace",

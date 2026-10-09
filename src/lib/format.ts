@@ -11,6 +11,9 @@ export function formatDate(value: string | Date | null | undefined): string {
   if (typeof value === "string") {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     if (m) return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1] ?? m[2]} ${m[1]}`;
+    // A month-only date (YYYY-MM) is shown as a month, not as the 1st of that month.
+    const ym = /^(\d{4})-(\d{2})$/.exec(value);
+    if (ym) return `${MONTHS[Number(ym[2]) - 1] ?? ym[2]} ${ym[1]}`;
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return value;
     return formatDate(d);
