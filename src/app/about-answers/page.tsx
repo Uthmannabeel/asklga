@@ -55,7 +55,7 @@ export default function AboutAnswersPage() {
                 </div>
                 <figcaption className="small muted">The stamp on an Obio/Akpor record compiled from the council&apos;s website. When the council confirms it, the stamp reads Verified, with the date.</figcaption>
               </figure>
-              <p style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Verified</strong> on an answer means it passed all five checks and links to the records it used. On a record, the stamp shows the source and, once the council&apos;s data owner has confirmed it, the date it was last confirmed. <strong style={{ color: "var(--ink)" }}>Not yet verified</strong> means the record is published but no confirmation date is on file.</p>
+              <p style={{ color: "var(--ink-2)" }}><strong style={{ color: "var(--ink)" }}>Checked answer</strong> means the answer passed all five checks and links to the records it used. <strong style={{ color: "var(--ink)" }}>Verified</strong> on a record means the council has confirmed it. On a record, the stamp shows the source and, once the council&apos;s data owner has confirmed it, the date it was last confirmed. <strong style={{ color: "var(--ink)" }}>Not yet verified</strong> means the record is published but no confirmation date is on file.</p>
             </div>
           </section>
 

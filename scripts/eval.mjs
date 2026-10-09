@@ -39,7 +39,11 @@ async function main() {
   const rows = [];
   let pass = 0;
   let figureFailures = 0;
+  // Without a staff session the public limit applies (6 questions a minute per connection), so
+  // EVAL_PACE_MS spaces the requests out, e.g. EVAL_PACE_MS=11000 for a run against production.
+  const pace = Number(process.env.EVAL_PACE_MS ?? 0);
   for (const c of cases) {
+    if (pace && rows.length) await new Promise((r) => setTimeout(r, pace));
     const started = Date.now();
     // The staff cookie is sent on every request: it lifts the per-connection rate limit for the
     // harness, and the server still forces public scope unless the case asks for internal.
