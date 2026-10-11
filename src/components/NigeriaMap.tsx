@@ -20,7 +20,7 @@ export function NigeriaMap({ rows, selected }: { rows: MapRow[]; selected?: stri
         return (
           <Link
             key={t.code}
-            href={current ? "/#map" : `/?state=${t.code}#map`}
+            href={current ? "/map" : `/map?state=${t.code}`}
             scroll={false}
             className={`ng-tile ${lit ? "has-lit" : ""}`}
             // --i staggers the first-paint animation in a diagonal wave (globals.css, reduced-motion aware).

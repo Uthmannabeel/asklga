@@ -4,11 +4,10 @@ import { Mark } from "./Wordmark";
 import { NavLinks } from "./NavLinks";
 
 const NATIONAL = [
-  { href: "/", label: "Find your LGA", exact: true },
+  { href: "/", label: "Ask", exact: true },
+  { href: "/map", label: "Map" },
   { href: "/money", label: "Money" },
-  { href: "/compare", label: "Compare" },
   { href: "/about-answers", label: "How answers work" },
-  { href: "/standard", label: "Open data" },
   { href: "/join", label: "For officials" },
 ];
 

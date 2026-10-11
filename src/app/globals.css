@@ -242,6 +242,39 @@ th { font-weight: 700; color: var(--muted); }
 .finder-results a { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; color: var(--ink); text-decoration: none; border-top: 1px solid var(--rule); }
 .finder-results li:first-child a { border-top: 0; }
 .finder-results a:hover, .finder-results a:focus-visible { background: var(--canvas); }
+.finder-results button { all: unset; box-sizing: border-box; display: flex; width: 100%; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; color: var(--ink); border-top: 1px solid var(--rule); cursor: pointer; }
+.finder-results li:first-child button { border-top: 0; }
+.finder-results button:hover, .finder-results button:focus-visible { background: var(--canvas); }
+
+/* Home: the enquiry slip. A paper form addressed to one council, not a marketing hero. */
+.home-ask { padding-block: clamp(1.5rem, 5vw, 4rem) clamp(2.5rem, 6vw, 5rem); display: grid; gap: clamp(1.25rem, 3vw, 2rem); justify-items: center; }
+.home-ask h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.05; letter-spacing: -0.03em; text-align: center; max-width: 16ch; }
+.home-ask .home-sub { text-align: center; max-width: 46ch; color: var(--ink-2); font-size: 1.08rem; }
+.slip { width: 100%; max-width: 44rem; background: var(--paper); border: 1px solid var(--rule-strong); border-top: 5px solid var(--civic); border-radius: var(--radius); box-shadow: 0 1px 0 var(--rule), 0 18px 40px -24px rgba(15,23,18,0.35); }
+.slip-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.25rem 1rem; align-items: baseline; padding: 1rem 1.25rem; border-bottom: 1px dashed var(--rule-strong); }
+.slip-k { font-family: var(--font-mono), monospace; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.slip-to { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.75rem; min-width: 0; }
+.slip-name { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.01em; }
+.slip-where { color: var(--muted); font-size: 0.95rem; }
+.slip-change { all: unset; cursor: pointer; color: var(--civic); text-decoration: underline; text-underline-offset: 3px; font-size: 0.95rem; margin-left: auto; padding: 0.35rem 0; }
+.slip-change:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.slip-pick { display: grid; gap: 0.5rem; min-width: 0; }
+.slip-input { font-size: 1.1rem; border: 2px solid var(--ink); padding: 0.6rem 0.75rem; }
+.slip-pick .slip-change { margin-left: 0; justify-self: start; }
+.slip-body { padding: 1.25rem; }
+.slip-body .measure { max-width: none; }
+.home-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 1.5rem; color: var(--muted); font-size: 0.92rem; }
+/* The bullet is one lit map dot: the same mark as the national map. */
+.home-trust span::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 1px; background: var(--lit); margin-right: 0.5rem; vertical-align: 0.1em; }
+
+/* Home: three doors to everything else. Rules, not cards. */
+.doors { display: grid; border-top: 1px solid var(--rule-strong); }
+@media (min-width: 768px) { .doors { grid-template-columns: repeat(3, minmax(0, 1fr)); } .doors > a + a { border-left: 1px solid var(--rule); } }
+.doors > a { display: grid; gap: 0.35rem; padding: 1.5rem 1.25rem 1.75rem; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.doors > a:hover { background: var(--paper); }
+.doors .door-n { font-family: var(--font-mono), monospace; font-size: 0.8rem; color: var(--civic); }
+.doors .door-t { font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; gap: 0.5rem; }
+.doors .door-d { color: var(--ink-2); font-size: 0.95rem; }
 
 .specimen { background: var(--paper); color: var(--ink); border-radius: 6px; box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 24px 48px rgba(0,0,0,0.28); overflow: hidden; }
 .specimen a { color: var(--civic); }
