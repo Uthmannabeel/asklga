@@ -52,6 +52,30 @@ Every one of Nigeria's 774 local government areas has a page from the first star
 - **Scoreboard** (`/scoreboard`): per LGA, approved records, questions and answer rate over 30 days, open gaps, and the latest test-set accuracy. The eval harness posts only which stored answer belongs to which test case; the server reloads those answers from its own question log (same LGA, last six hours, matching test question, every case once), scores them with the shared rubric in `src/lib/evalScore.mjs`, and stores the per-case result with the model and a sha256 of the test set (`JSON.stringify` of the parsed `eval/questions.json`, so line endings do not change it). Any run is inspectable at `/api/eval-result?run=<id>`. Runs from before server scoring are labelled staff-reported. A run is only as broad as the test set, and staff can still choose when to run it.
 - **Insights** (`/insights`): the demand signal. Questions by state, language and audience, and the questions residents repeat that no LGA has a record for. Only questions asked more than once are listed.
 
+## Voice (N-ATLAS)
+
+Residents who do not type can tap **Speak the question**. The browser records the question (MediaRecorder, any modern phone), `/api/voice` checks the budget (six a minute, sixty a day per connection) and passes the audio to the voice service, and the words come back into the box and are asked straight away. The resident can still read, correct and re-ask.
+
+Speech recognition uses the N-ATLAS automatic speech recognition models published by NCAIR (NITDA) on Hugging Face, one per language:
+
+| Voice language | Model |
+|---|---|
+| English, Pidgin | `NCAIR1/NigerianAccentedEnglish` |
+| Hausa | `NCAIR1/Hausa-ASR` |
+| Yoruba | `NCAIR1/Yoruba-ASR` |
+| Igbo | `NCAIR1/Igbo-ASR` |
+
+The service is `voice/modal_app.py` (FastAPI on Modal, CPU, weights baked into the image, memory snapshot for cold starts, scales to zero). Audio is decoded in memory and never stored or logged, on either side. Deploy:
+
+```
+modal secret create asklga-voice HF_TOKEN=<token with access to the gated NCAIR1 models> ASR_KEY=<random>
+modal deploy voice/modal_app.py
+```
+
+then set `ASR_URL` and `ASR_KEY` on the web app. `voice/hf-space/` is the same service as a Hugging Face Docker Space, for an account that can host one.
+
+Checked 11 Oct 2026 against held-out recordings from open datasets (reference -> N-ATLAS output): Hausa "Na san shugaban ɗalibai maza na makarantar." -> exact; Yoruba "Orílẹ̀-èdè Ghana jẹ́ ibi tó rẹwà" -> "orílẹ̀ èdè ganna jẹ́ ibi tó rẹwà"; Igbo "Mekaniiki ahụ ka na-arụ otu ụgbọala ahụ kemgbe ụtụtụ" -> one letter off ("na-alụ"); Nigerian English -> exact apart from punctuation. Four clips are a smoke test, not an accuracy figure.
+
 ## Staff accounts
 
 - **First run:** sign in at `/admin` with `ADMIN_PASSCODE`, open Accounts, create the first administrator. The passcode then stops working. Or, with the server stopped: `npm run create-admin -- you@lga.gov.ng "Your Name" <password>`.
@@ -127,7 +151,7 @@ Runs `eval/questions.json` (60 cases: 34 resident and 8 investor questions acros
 - The Pidgin, Hausa, Yoruba and Igbo interface strings and refusal messages are drafts awaiting native-speaker review, and the pages say so.
 - Rate-limit buckets are in memory; a multi-server deployment should move them to Postgres or Redis.
 - Alerts are outbound only; there is no inbound SMS or WhatsApp channel.
-- Voice input uses the browser's speech recognition. Hausa, Yoruba and Igbo recognition is experimental; the plan's speech-to-text bake-off has not been run.
+- Voice runs on Modal's free tier, which scales to zero: the first voice question after a few idle minutes waits for a cold start (10 to 40 seconds); warm, a short question takes 5 to 10 seconds on 2 CPUs. Reading the answer aloud uses the device's own voices, which few phones have for Hausa, Yoruba or Igbo; the button only appears when one exists.
 - Refusal messages in Hausa, Yoruba and Igbo have not had native-speaker review.
 - Photo evidence is by link only; there is no upload store yet.
 - The register block is sent whole to the model. For an LGA with thousands of records, switch to retrieval-only for the registers too.

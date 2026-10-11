@@ -30,13 +30,16 @@ const PLACEHOLDERS = [
   "Kedu ihe m ga-eme ka m nweta akwụkwọ ọmụmụ?",
 ];
 
-const SPEECH_LANGS: { code: string; label: string; note?: string }[] = [
-  { code: "en-NG", label: "English" },
-  { code: "en-NG", label: "Pidgin", note: "Pidgin is recognised through the English model. Check the words before you send." },
-  { code: "ha-NG", label: "Hausa", note: "Hausa voice recognition is experimental in most browsers. Check the words before you send." },
-  { code: "yo-NG", label: "Yoruba", note: "Yoruba voice recognition is experimental in most browsers. Check the words before you send." },
-  { code: "ig-NG", label: "Igbo", note: "Igbo voice recognition is experimental in most browsers. Check the words before you send." },
+/** Voice languages, each recognised by an N-ATLAS speech model (NCAIR1) through /api/voice. */
+const SPEECH_LANGS: { code: UiLang; label: string; note?: string }[] = [
+  { code: "en", label: "English" },
+  { code: "pcm", label: "Pidgin", note: "Pidgin is recognised through the Nigerian English model." },
+  { code: "ha", label: "Hausa" },
+  { code: "yo", label: "Yoruba" },
+  { code: "ig", label: "Igbo" },
 ];
+/** Longest recording; the voice service reads up to 60 s, a question rarely needs 30. */
+const MAX_RECORD_MS = 30000;
 
 const HTML_LANG: Record<string, string> = { en: "en-NG", pcm: "pcm", ha: "ha", yo: "yo", ig: "ig" };
 const SPEECH_DEFAULT: Record<UiLang, number> = { en: 0, pcm: 1, ha: 2, yo: 3, ig: 4 };
@@ -99,19 +102,36 @@ export function AskBox({
   const [speechSupported, setSpeechSupported] = useState(false);
   const [coarsePointer, setCoarsePointer] = useState(false);
   const [listening, setListening] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [reading, setReading] = useState(false);
   const [speechLang, setSpeechLang] = useState(SPEECH_DEFAULT[lang] ?? 0);
   const recRef = useRef<{ stop: () => void } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setPlaceholder(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
-    const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
-    setSpeechSupported(Boolean(w.SpeechRecognition || w.webkitSpeechRecognition));
+    // Voice needs only a microphone and MediaRecorder; recognition happens on the server.
+    setSpeechSupported(Boolean(navigator.mediaDevices?.getUserMedia) && typeof MediaRecorder !== "undefined");
     setCoarsePointer(window.matchMedia("(pointer: coarse)").matches);
     return () => abortRef.current?.abort();
   }, []);
 
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    const load = () => setVoices(synth.getVoices());
+    load();
+    synth.addEventListener("voiceschanged", load);
+    return () => {
+      synth.removeEventListener("voiceschanged", load);
+      synth.cancel();
+    };
+  }, []);
+
   function resetFollowUps() {
+    if (reading) window.speechSynthesis.cancel();
+    setReading(false);
     setFeedback(null);
     setFeedbackError(null);
     setShowPerson(false);
@@ -168,33 +188,79 @@ export function AskBox({
     }
   }
 
-  function toggleListen() {
+  async function toggleListen() {
     if (listening) {
       recRef.current?.stop();
-      setListening(false);
       return;
     }
-    const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
-    const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-    if (!Ctor) return;
-    const rec = new Ctor();
-    rec.lang = SPEECH_LANGS[speechLang].code;
-    rec.interimResults = true;
-    rec.continuous = false;
-    rec.onresult = (ev) => {
-      let text = "";
-      for (let i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
-      setQ(text);
+    setProblem(null);
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      setProblem({ kind: "input", message: err instanceof DOMException && err.name === "NotAllowedError" ? t.voiceDenied : t.voiceFailed });
+      return;
+    }
+    const type = ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/mp4"].find((m) => MediaRecorder.isTypeSupported(m));
+    const rec = new MediaRecorder(stream, type ? { mimeType: type, audioBitsPerSecond: 32000 } : undefined);
+    const chunks: Blob[] = [];
+    const lang = SPEECH_LANGS[speechLang].code;
+    rec.ondataavailable = (ev) => {
+      if (ev.data.size) chunks.push(ev.data);
     };
-    rec.onend = () => setListening(false);
-    rec.onerror = (ev) => {
+    const cap = setTimeout(() => rec.state !== "inactive" && rec.stop(), MAX_RECORD_MS);
+    rec.onstop = async () => {
+      clearTimeout(cap);
+      stream.getTracks().forEach((track) => track.stop());
       setListening(false);
-      const code = ev && typeof ev === "object" && "error" in ev ? String((ev as { error?: string }).error) : "";
-      setProblem({ kind: "input", message: code === "not-allowed" || code === "service-not-allowed" ? t.voiceDenied : t.voiceFailed });
+      const blob = new Blob(chunks, { type: (rec.mimeType || type || "audio/webm").split(";")[0] });
+      if (!blob.size) return;
+      setTranscribing(true);
+      try {
+        const res = await fetch(`/api/voice?lang=${lang}`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
+        const out = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
+        if (!res.ok || !out.text) {
+          setProblem({ kind: "input", message: out.error || t.voiceFailed });
+          return;
+        }
+        // The words go in the box so the resident can check them, and the question is asked
+        // straight away so someone who does not type never has to.
+        setQ(out.text);
+        submit(undefined, out.text);
+      } catch {
+        setProblem({ kind: "input", message: t.voiceFailed });
+      } finally {
+        setTranscribing(false);
+      }
     };
     recRef.current = rec;
-    setListening(true);
     rec.start();
+    setListening(true);
+  }
+
+  /** A device voice for the answer's language, if this phone or browser has one. */
+  function voiceFor(language: string): SpeechSynthesisVoice | undefined {
+    const want = language === "pcm" ? "en" : language;
+    return voices.find((v) => v.lang.toLowerCase() === `${want}-ng`) ?? voices.find((v) => v.lang.toLowerCase().startsWith(want));
+  }
+
+  function toggleReading() {
+    const synth = window.speechSynthesis;
+    if (reading) {
+      synth.cancel();
+      setReading(false);
+      return;
+    }
+    const voice = result ? voiceFor(result.language) : undefined;
+    if (!result || !voice) return;
+    const u = new SpeechSynthesisUtterance(result.answer);
+    u.voice = voice;
+    u.lang = voice.lang;
+    u.onend = () => setReading(false);
+    u.onerror = () => setReading(false);
+    synth.cancel();
+    synth.speak(u);
+    setReading(true);
   }
 
   async function sendFeedback(f: "up" | "down") {
@@ -320,8 +386,8 @@ export function AskBox({
           {busy ? <button type="button" className="btn btn-quiet" onClick={() => abortRef.current?.abort()}>{t.stop}</button> : null}
           {speechSupported ? (
             <>
-              <button type="button" className={`btn btn-quiet ${listening ? "font-bold" : ""}`} onClick={toggleListen} aria-pressed={listening} disabled={busy}>
-                {listening ? t.stopListening : t.speak}
+              <button type="button" className={`btn btn-quiet ${listening ? "font-bold" : ""}`} onClick={toggleListen} aria-pressed={listening} disabled={busy || transcribing} aria-busy={transcribing}>
+                {listening ? t.stopRecording : transcribing ? t.transcribing : t.speak}
               </button>
               <label className="small muted flex items-center gap-1">
                 <span>{t.voiceLanguage}</span>
@@ -334,7 +400,7 @@ export function AskBox({
             </>
           ) : null}
         </div>
-        {speechSupported && note ? <p className="small muted">{note}</p> : null}
+        {speechSupported ? <p className="small muted">{t.voiceBy}{note ? <span lang="en"> {note}</span> : null}</p> : null}
       </form>
 
       <div aria-live="polite" className="grid gap-4">
@@ -365,6 +431,9 @@ export function AskBox({
         {result ? (
           <section className="mt-6 grid gap-4">
             <p className="answer" lang={answerLang}>{result.answer}</p>
+            {voiceFor(result.language) ? (
+              <button type="button" className="btn btn-quiet btn-sm justify-self-start" onClick={toggleReading} aria-pressed={reading}>{reading ? t.stopReading : t.listen}</button>
+            ) : null}
             {result.mode === "search" ? <p className="small muted">{t.searchModeNote}</p> : null}
 
             {result.disclaimer !== "none" ? <p className="small muted">{result.disclaimer === "legal" ? t.legal : t.medical}</p> : null}
@@ -421,14 +490,3 @@ export function AskBox({
     </div>
   );
 }
-
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult: ((ev: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onend: (() => void) | null;
-  onerror: ((ev: unknown) => void) | null;
-  start: () => void;
-  stop: () => void;
-};
