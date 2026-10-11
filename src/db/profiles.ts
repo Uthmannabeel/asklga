@@ -27,7 +27,8 @@ export async function seedProfiles(db: any) {
     .from(s.lgas)) as { id: string; lat: number | null; lng: number | null; headquarters: string | null; areaKm2: number | null; population: number | null; createdYear: number | null; senatorialDistrict: string | null; factSources: Record<string, string> | null }[];
   const byId = new Map(rows.map((r) => [r.id, r]));
   let changed = 0;
-  // Centre points from the GRID3 boundaries, only where the LGA has no coordinates of its own.
+  // Centre points from the GRID3 boundaries, filling latitude and longitude independently so a
+  // value the LGA entered itself is kept.
   // One statement for all of them, so a first cold start is not hundreds of round trips.
   const need = Object.entries(centroids as unknown as Record<string, [number, number]>).filter(([id]) => {
     const r = byId.get(id);
@@ -35,7 +36,7 @@ export async function seedProfiles(db: any) {
   });
   if (need.length) {
     const values = sql.join(need.map(([id, [lat, lng]]) => sql`(${id}, ${lat}::double precision, ${lng}::double precision)`), sql`, `);
-    await db.execute(sql`UPDATE lgas SET lat = v.lat, lng = v.lng FROM (VALUES ${values}) AS v(id, lat, lng) WHERE lgas.id = v.id AND (lgas.lat IS NULL OR lgas.lng IS NULL)`);
+    await db.execute(sql`UPDATE lgas SET lat = COALESCE(lgas.lat, v.lat), lng = COALESCE(lgas.lng, v.lng) FROM (VALUES ${values}) AS v(id, lat, lng) WHERE lgas.id = v.id AND (lgas.lat IS NULL OR lgas.lng IS NULL)`);
     changed += need.length;
   }
   const pending: { id: string; set: Record<string, unknown>; src: Record<string, string> }[] = [];
