@@ -33,7 +33,7 @@ export async function SiteHeader({ lga, demo, compiled, back }: { lga?: { id: st
       ) : null}
       {!REVIEWED[lang] ? <div className="demo-banner" role="note" lang="en"><div className="wrap">{t.pendingReview}</div></div> : null}
       <header className="site-header">
-        <div className="wrap site-header-row">
+        <div className={`wrap site-header-row ${lga ? "is-lga" : ""}`}>
           <Link href="/" className="wordmark" aria-label="AskLGA home">
             <Mark />
             <span>AskLGA</span>
@@ -51,7 +51,8 @@ export async function SiteHeader({ lga, demo, compiled, back }: { lga?: { id: st
             <summary>
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.3" /><path d="M1.5 8h13M8 1.5c2 2 2.8 4.2 2.8 6.5S10 12.5 8 14.5M8 1.5C6 3.5 5.2 5.7 5.2 8S6 12.5 8 14.5" fill="none" stroke="currentColor" strokeWidth="1.3" /></svg>
               <span className="sr-only">{t.language}: </span>
-              <span>{LANG_NAMES[lang]}</span>
+              <span className="lang-full">{LANG_NAMES[lang]}</span>
+              <span className="lang-code" aria-hidden="true">{lang.toUpperCase()}</span>
               <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
             </summary>
             <ul>

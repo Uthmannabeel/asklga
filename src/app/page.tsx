@@ -68,17 +68,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
         <section className="wrap py-16 md:py-20 grid gap-10">
           <h2>How it works</h2>
           <ol className="grid gap-8 md:grid-cols-3">
-            <li className="step">
+            <li className="step reveal">
               <span className="step-num">01</span>
               <h3>Find your area</h3>
               <p className="muted">All {sum.lgas} local government areas have a page.</p>
             </li>
-            <li className="step">
+            <li className="step reveal">
               <span className="step-num">02</span>
               <h3>Ask the way you talk</h3>
               <p className="muted">Type or speak, in five languages. No name or phone number needed.</p>
             </li>
-            <li className="step">
+            <li className="step reveal">
               <span className="step-num">03</span>
               <h3>Check the source</h3>
               <p className="muted">Each answer cites its records. If none covers your question, it says so.</p>
@@ -161,7 +161,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
               {([["Highest this month", money.top], ...(money.perHead.length ? [["Most per resident (2006 census)", money.perHead]] : [])] as [string, typeof money.top][]).map(([h, list]) => (
-                <div key={h as string} className="grid gap-2 content-start">
+                <div key={h as string} className="grid gap-2 content-start reveal">
                   <p className="font-bold">{h as string}</p>
                   <ol className="register">
                     {(list as typeof money.top).map((r, i) => (
@@ -189,7 +189,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
               ["investment", "Investing in the area", "Land, approvals and contacts."],
               ["open-data", "Open data", "Every register as JSON and CSV."],
             ].map(([slug, title, desc]) => (
-              <li key={slug}>
+              <li key={slug} className="reveal">
                 <Link href={`/${demoId}/${slug}`}>
                   <span className="task-title">{title}</span>
                   <Arrow />
@@ -212,7 +212,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
                 ["Personal details removed", <>Names and phone numbers are stripped. <Link href="/privacy">Privacy</Link></>],
                 ["Open standard", <>One schema any council can adopt. <Link href="/standard">The standard</Link></>],
               ].map(([k, v]) => (
-                <div key={k as string} className="proof">
+                <div key={k as string} className="proof reveal">
                   <p className="font-bold">{k}</p>
                   <p className="text-ink-2" style={{ color: "var(--ink-2)" }}>{v}</p>
                 </div>

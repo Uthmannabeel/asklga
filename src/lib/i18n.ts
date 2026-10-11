@@ -76,6 +76,7 @@ const en = {
   listen: "Listen to the answer",
   stopReading: "Stop reading",
   voiceBy: "Your voice is turned into text by the N-ATLAS speech models from NCAIR. Check the words in the box; if they are wrong, change them and ask again.",
+  voiceByShort: "How voice works",
   searchModeNote: "Search mode: internal documents are matched by keyword on this server and are not sent to the model provider.",
   stamp: { verified: "Verified", notVerified: "Not yet verified", record: "record", source: "Source", approved: "Approved for publication by the LGA data owner", lastVerified: "Last verified", added: "Added", noDate: "No verification date on file" },
   footer: {
@@ -160,6 +161,7 @@ const pcm: Dict = {
   listen: "Hear di answer",
   stopReading: "Stop to read",
   voiceBy: "N-ATLAS speech models from NCAIR dey change your voice to text. Check di words for di box; if dem no correct, change dem and ask again.",
+  voiceByShort: "How voice dey work",
   searchModeNote: "Search mode: we dey match internal documents by keyword for dis server; we no dey send dem go di model provider.",
   stamp: { verified: "Verified", notVerified: "Never verify", record: "record", source: "Source", approved: "Di LGA data owner don approve am make people see am", lastVerified: "Last verified", added: "Added", noDate: "No verification date for file" },
   footer: {
@@ -242,6 +244,7 @@ const ha: Dict = {
   listen: "Saurari amsar",
   stopReading: "Daina karantawa",
   voiceBy: "Samfuran magana na N-ATLAS daga NCAIR ne ke mayar da muryarka rubutu. Duba kalmomin da ke cikin akwatin; idan ba daidai ba ne, gyara su ka sake tambaya.",
+  voiceByShort: "Yadda murya ke aiki",
   searchModeNote: "Yanayin bincike: ana daidaita takardun ciki da kalmomi a wannan sabar; ba a aika su ga mai samar da samfurin ba.",
   stamp: { verified: "An tabbatar", notVerified: "Ba a tabbatar ba tukuna", record: "rikodi", source: "Tushe", approved: "Mai kula da bayanan ƙaramar hukuma ya amince a buga", lastVerified: "An tabbatar ƙarshe", added: "An ƙara", noDate: "Babu ranar tabbatarwa a fayil" },
   footer: {
@@ -324,6 +327,7 @@ const yo: Dict = {
   listen: "Gbọ́ ìdáhùn náà",
   stopReading: "Dáwọ́ kíkà dúró",
   voiceBy: "Àwọn àwòṣe ọ̀rọ̀ N-ATLAS láti NCAIR ló ń yí ohùn rẹ padà sí ọ̀rọ̀ kíkọ. Ṣàyẹ̀wò àwọn ọ̀rọ̀ inú àpótí; tí wọn kò bá tọ̀nà, ṣàtúnṣe wọn kí o sì tún béèrè.",
+  voiceByShort: "Bí ohùn ṣe ń ṣiṣẹ́",
   searchModeNote: "Ipò ìwádìí: a ń bá àwọn ìwé inú mu pẹ̀lú ọ̀rọ̀ lórí ẹ̀rọ yìí; a kì í fi wọ́n ránṣẹ́ sí olùpèsè àwòṣe.",
   stamp: { verified: "A ti jẹ́rìí sí i", notVerified: "A kò tíì jẹ́rìí sí i", record: "àkọsílẹ̀", source: "Orísun", approved: "Olùtọ́jú dátà ìjọba ìbílẹ̀ ti fọwọ́ sí i fún ìtẹ̀jáde", lastVerified: "Ìjẹ́rìí tó kẹ́yìn", added: "A fi kún un", noDate: "Kò sí ọjọ́ ìjẹ́rìí nínú fáìlì" },
   footer: {
@@ -406,6 +410,7 @@ const ig: Dict = {
   listen: "Gee azịza ahụ ntị",
   stopReading: "Kwụsị ọgụgụ",
   voiceBy: "Ụdị okwu N-ATLAS sitere na NCAIR na-agbanwe olu gị ka ọ bụrụ ederede. Lelee okwu ndị dị n'igbe; ọ bụrụ na ha ezighi ezi, dozie ha ma jụọ ọzọ.",
+  voiceByShort: "Otu olu si arụ ọrụ",
   searchModeNote: "Ụdị nchọ: a na-eji mkpụrụokwu ejikọ akwụkwọ ime na sava a; anaghị ezigara ha onye na-enye ụdị.",
   stamp: { verified: "E nyochara", notVerified: "Enyochabeghị", record: "ndekọ", source: "Isi mmalite", approved: "Onye na-elekọta data gọọmentị ime obodo kwadoro ya maka mbipụta", lastVerified: "Nyocha ikpeazụ", added: "Agbakwunyere", noDate: "Enweghị ụbọchị nyocha na faịlụ" },
   footer: {
