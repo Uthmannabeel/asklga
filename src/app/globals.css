@@ -377,3 +377,32 @@ a.record-title:hover { color: var(--civic); text-decoration: underline; }
 .lga-shape { fill: #dde3dc; }
 .lga-label { font-family: var(--font-ui), sans-serif; font-size: 10px; fill: var(--ink-2); paint-order: stroke; stroke: rgba(255,255,255,0.85); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .lga-label.is-focus { font-weight: 700; font-size: 12px; fill: var(--ink); }
+
+/* Suggested questions under the ask box: full-width text rows, easy to tap on a phone. */
+.suggest { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--rule); }
+.suggest li { border-bottom: 1px solid var(--rule); }
+.suggest button { all: unset; box-sizing: border-box; display: block; width: 100%; padding: 0.7rem 0.1rem; cursor: pointer; color: var(--civic); font-size: 1rem; line-height: 1.35; }
+.suggest button:hover { text-decoration: underline; }
+.suggest button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* The compiled-records banner: one line with a disclosure; the full explanation on demand. */
+details.demo-banner > summary { cursor: pointer; list-style: none; }
+details.demo-banner > summary::-webkit-details-marker { display: none; }
+details.demo-banner > summary .why { text-decoration: underline; margin-left: 0.35rem; white-space: nowrap; }
+details.demo-banner[open] > summary .why { display: none; }
+details.demo-banner > p { margin: 0.35rem 0 0; }
+
+/* In lists the source is one line; the full citation is on the record page and in the tooltip. */
+.meta-line .src { flex: 1 1 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Grid items default to min-width:auto, which lets a one-line source push the row wider than the screen. */
+.register-row > * { min-width: 0; }
+.meta-line { min-width: 0; max-width: 100%; }
+
+/* Council page top: name, ask box, then intro on phones; name + intro beside the ask box on desktop. */
+.lga-top { display: grid; gap: 1.25rem; padding-block: 1.25rem 2rem; grid-template-areas: "title" "ask" "about"; }
+.lt-title { grid-area: title; }
+.lt-ask { grid-area: ask; }
+.lt-about { grid-area: about; }
+@media (min-width: 1024px) {
+  .lga-top { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-areas: "title ask" "about ask"; column-gap: 3rem; row-gap: 1rem; padding-block: 2rem 2.5rem; align-items: start; }
+}

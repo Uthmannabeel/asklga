@@ -42,35 +42,53 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
   const rank = latest ? await rankFor(lga, row.state, latest.period) : null;
   const last24 = money.slice(-24);
   const total12 = money.slice(-12).reduce((n, r) => n + (r.value ?? 0), 0);
+  // Example questions built from this council's own records, so each one has an answer.
+  const watched = projects.find((p) => p.status === "stalled") ?? projects.find((p) => p.status === "ongoing");
+  const suggestions = joined
+    ? [
+        watched ? `What is happening with the ${watched.name}?` : null,
+        services[0] ? `${services[0].name}: how does it work?` : null,
+        projects.some((p) => p.status === "stalled") ? "Which projects are stalled?" : null,
+      ].filter((s): s is string => Boolean(s))
+    : [];
+  const about = (
+    <>
+      <p className="lede measure" lang="en">
+        {row.intro ?? `${row.name} is one of ${siblings.length} local government areas in ${stateLabel(row.state)}${row.zone ? `, in the ${row.zone} zone` : ""}.`}
+      </p>
+      {facts.length ? (
+        <dl className="fact-strip mt-2" lang="en">
+          {facts.map((f) => (
+            <div key={f.key}>
+              <dt>{f.label}{f.note ? <span className="muted"> · {f.note}</span> : null}</dt>
+              <dd>{f.source ? <a href={f.source} rel="noopener" style={{ color: "inherit" }} title="Source">{f.value}</a> : f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </>
+  );
 
+  const stateMap = code ? (
+    <StateMap code={code} names={names} focus={lga} lit={siblings.filter((s) => s.records > 0).map((s) => s.id)} label={`Map of ${stateLabel(row.state)} with ${row.name} highlighted`} labels="focus" />
+  ) : null;
+
+  // One grid: on phones the name, then the ask box, then the intro and facts; on desktop the
+  // name and facts on the left and the ask box beside them, so asking is the first thing on screen.
   const hero = (
     <section className="lga-hero">
-      <div className="wrap pt-8 pb-10 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-start">
-        <div className="grid gap-4 content-start">
+      <div className="wrap lga-top">
+        <div className="lt-title grid gap-3 content-start">
           <nav aria-label="Breadcrumb" className="small muted flex flex-wrap gap-1">
             <Link href="/" className="muted">Nigeria</Link><span aria-hidden="true">/</span>
             <Link href={`/state/${stateSlug(row.state)}`} className="muted">{stateLabel(row.state)}</Link>
           </nav>
           <h1>{row.name}</h1>
-          <p className="lede measure" lang="en">
-            {row.intro ?? `${row.name} is one of ${siblings.length} local government areas in ${stateLabel(row.state)}${row.zone ? `, in the ${row.zone} zone` : ""}.`}
-          </p>
-          {facts.length ? (
-            <dl className="fact-strip mt-2" lang="en">
-              {facts.map((f) => (
-                <div key={f.key}>
-                  <dt>{f.label}{f.note ? <span className="muted"> · {f.note}</span> : null}</dt>
-                  <dd>{f.source ? <a href={f.source} rel="noopener" style={{ color: "inherit" }} title="Source">{f.value}</a> : f.value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
         </div>
-        {code ? (
-          <div className="hidden lg:grid gap-3 lg:justify-self-end w-full max-w-md">
-            <StateMap code={code} names={names} focus={lga} lit={siblings.filter((s) => s.records > 0).map((s) => s.id)} label={`Map of ${stateLabel(row.state)} with ${row.name} highlighted`} />
-          </div>
-        ) : null}
+        <div className="lt-ask panel">
+          <AskBox lgaId={lga} t={t} lang={lang} suggestions={suggestions} />
+        </div>
+        <div className="lt-about grid gap-4 content-start">{about}</div>
       </div>
     </section>
   );
@@ -87,10 +105,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
 
   return (
     <LgaShell lgaId={lga} hero={<>{hero}<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} /></>}>
-      <section className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start">
-        <div className="panel">
-          <AskBox lgaId={lga} t={t} lang={lang} />
-        </div>
+      <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
         <aside className="grid gap-5 content-start" lang="en">
           {!joined ? (
             <div className="grid gap-2">
@@ -116,6 +131,12 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
             <p className="small"><Link href={`/${lga}/investment`}>{t.home.readProfile}</Link></p>
           </div>
         </aside>
+        {stateMap ? (
+          <div className="grid gap-2" lang="en">
+            <h2 style={{ fontSize: "1.3rem" }}>Where {row.name} is</h2>
+            <div className="w-full max-w-md">{stateMap}</div>
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-6" lang="en" aria-labelledby="money-h">
@@ -186,13 +207,6 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
             </ul>
             <p className="small"><Link href={`/${lga}/services`}>{fill(t.home.allServices, services.length)}</Link></p>
           </div>
-        </section>
-      ) : null}
-
-      {code ? (
-        <section className="lg:hidden grid gap-2" lang="en">
-          <h2 style={{ fontSize: "1.3rem" }}>Where {row.name} is</h2>
-          <StateMap code={code} names={names} focus={lga} lit={siblings.filter((s) => s.records > 0).map((s) => s.id)} label={`Map of ${stateLabel(row.state)} with ${row.name} highlighted`} labels="focus" />
         </section>
       ) : null}
 

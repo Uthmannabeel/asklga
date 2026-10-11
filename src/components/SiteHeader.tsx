@@ -25,7 +25,12 @@ export async function SiteHeader({ lga, demo, compiled, back }: { lga?: { id: st
     <>
       <a href="#main" className="skip-link">{t.skip}</a>
       {demo ? <div className="demo-banner" role="note"><div className="wrap">{t.demoBanner}</div></div> : null}
-      {compiled && !demo ? <div className="demo-banner" role="note" lang="en"><div className="wrap">{COMPILED_BANNER}</div></div> : null}
+      {compiled && !demo ? (
+        <details className="demo-banner" lang="en">
+          <summary className="wrap">Compiled from public sources. Not yet confirmed by the council.<span className="why">Why?</span></summary>
+          <p className="wrap">{COMPILED_BANNER}</p>
+        </details>
+      ) : null}
       {!REVIEWED[lang] ? <div className="demo-banner" role="note" lang="en"><div className="wrap">{t.pendingReview}</div></div> : null}
       <header className="site-header">
         <div className="wrap site-header-row">

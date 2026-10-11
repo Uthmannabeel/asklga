@@ -67,7 +67,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ lga: s
               {p.evidence.map((e, i) => (
                 <li key={i} className="register-row">
                   <span>{e.caption}</span>
-                  <span className="small muted">Council evidence, {formatDate(e.date)}{httpOnly(e.url) ? <>, <a href={httpOnly(e.url)!} rel="noopener">view photo</a></> : ", photo not yet uploaded"}</span>
+                  <span className="small muted">Evidence, {formatDate(e.date)}{httpOnly(e.url) ? <>, <a href={httpOnly(e.url)!} rel="noopener">{/\.(jpe?g|png|webp|gif)(\?|$)/i.test(e.url) ? "view photo" : "open the source"}</a></> : ", no link on file"}</span>
                 </li>
               ))}
               {reports.map((r) => (

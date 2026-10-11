@@ -39,7 +39,7 @@ export async function SourceStamp({
           </span>
         ) : <span className="warn">{t.notVerified}</span>}
         {verified ? <span>{label} {formatDate(lastVerified)}</span> : null}
-        <span>{link ? <a href={link} rel="noopener">{source}</a> : source}</span>
+        <span className="src" title={source}>{link ? <a href={link} rel="noopener">{source}</a> : source}</span>
       </span>
     );
   }

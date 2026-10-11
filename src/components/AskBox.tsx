@@ -69,6 +69,7 @@ export function AskBox({
   compact = false,
   t,
   lang = "en",
+  suggestions = [],
 }: {
   lgaId: string;
   audience?: "resident" | "investor" | "staff";
@@ -76,6 +77,8 @@ export function AskBox({
   compact?: boolean;
   t: Dict;
   lang?: UiLang;
+  /** Example questions this council's records can answer; tapping one asks it. */
+  suggestions?: string[];
 }) {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -119,9 +122,9 @@ export function AskBox({
     setFlagError(null);
   }
 
-  async function submit(e?: React.FormEvent) {
+  async function submit(e?: React.FormEvent, asked?: string) {
     e?.preventDefault();
-    const question = q.trim();
+    const question = (asked ?? q).trim();
     if (!question || busy) return;
     setBusy(true);
     setSlow(false);
@@ -300,6 +303,18 @@ export function AskBox({
           }}
         />
         <p id={`ask-help-${lgaId}`} className="small muted">{t.askHelp}</p>
+        {suggestions.length && !result && !busy ? (
+          <div className="grid gap-1" lang="en">
+            <p className="small muted">{t.tryAsking}</p>
+            <ul className="suggest">
+              {suggestions.map((s) => (
+                <li key={s}>
+                  <button type="button" onClick={() => { setQ(s); submit(undefined, s); }}>{s}</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2">
           <button type="submit" className="btn" disabled={busy || !q.trim()} aria-busy={busy}>{busy ? t.looking : t.getAnswer}</button>
           {busy ? <button type="button" className="btn btn-quiet" onClick={() => abortRef.current?.abort()}>{t.stop}</button> : null}
