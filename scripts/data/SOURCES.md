@@ -3,10 +3,9 @@
 > **What is in this repository (11 Oct 2026).** Only the derived datasets are committed:
 > `scripts/data/faac-nbs-2024-08_2026-06.json` (16,843 rows: the 16,887 compiled in section 1
 > minus the 44 Kogi/Lokoja rows held back under "App import decisions"; sha256 `6a308372a6807d2b61b60b3eb359b2b844ec964efad7f3408aa25c2ef6271940`)
-> and `src/db/profiles.json` (sha256 `7a09fc1ecc09374b434f1ff14be1abe50348a1b9f6deee008f7e722c15be0b0c`). The raw downloads and the Python
-> parsers listed in section 5 were run in a working folder outside the repo and are not yet
-> committed, so this repository alone cannot re-run the extraction. Until they are added, every
-> row carries its exact source URL, so any value can be checked against the published file.
+> and `src/db/profiles.json` (sha256 `7a09fc1ecc09374b434f1ff14be1abe50348a1b9f6deee008f7e722c15be0b0c`). The Python parsers
+> listed in section 5 are in `parsers/`, with run instructions in `parsers/README.md`; the raw
+> downloads are not committed, and every row carries its exact source URL.
 
 The working folder held the files below; raw downloads were under `raw/`. Nothing here is estimated: every value was parsed from a published file that is cited per record. Names are joined to `asklga/src/db/lgas.json` ids through `lgamatch.py` and `aliases.json`.
 
@@ -130,7 +129,7 @@ Examples of well-established renames: Egbado North/South → yewa-north/south; M
 - moya (Munya), kumi (Kurmi), unuimo (name "Onuimo")
 - yakuur, wamako
 
-## 5. Scripts (in the working folder, not yet in this repository)
+## 5. Scripts (`parsers/`)
 
 - `parse_nbs_xlsx.py`: parses the workbooks into `work_nbs_rows.json`.
 - `build_faac.py`: runs the reconciliation gate and writes `faac.json` and `faac_excluded_groups.json`.

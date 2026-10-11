@@ -1,0 +1,7 @@
+raw/
+work_*.json
+nbs_urls.json
+faac.json
+faac_excluded_groups.json
+profiles.json
+__pycache__/
