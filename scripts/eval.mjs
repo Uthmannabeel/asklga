@@ -22,10 +22,24 @@ const base = process.argv[2] ?? "http://localhost:3000";
 const staffName = process.argv[3];
 const passcode = process.argv[4];
 
+// Retries network failures (DNS, reset, connect timeout) so one dropped connection does not end
+// a 60-case run. HTTP error responses are returned as they are.
+async function fetchRetry(url, init, tries = 12) {
+  for (let i = 1; ; i++) {
+    try {
+      return await fetch(url, init);
+    } catch (e) {
+      if (i >= tries) throw e;
+      console.log(`  network error (${e.cause?.code ?? e.message}), retry ${i} of ${tries - 1}`);
+      await new Promise((r) => setTimeout(r, Math.min(5000 * i, 30_000)));
+    }
+  }
+}
+
 async function staffCookie() {
   if (!staffName || !passcode) return null;
   // The sign-in form is a server action; use the plain API-less route by posting the form.
-  const res = await fetch(`${base}/api/staff-session`, {
+  const res = await fetchRetry(`${base}/api/staff-session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: staffName, passcode }),
@@ -38,6 +52,7 @@ async function staffCookie() {
 async function main() {
   const cases = JSON.parse(fs.readFileSync(path.join(process.cwd(), "eval", "questions.json"), "utf8"));
   const cookie = await staffCookie();
+  if (staffName && !cookie) throw new Error("Staff sign-in failed: check the email and password.");
   const rows = [];
   let pass = 0;
   let figureFailures = 0;
@@ -49,7 +64,7 @@ async function main() {
     const started = Date.now();
     // The staff cookie is sent on every request: it lifts the per-connection rate limit for the
     // harness, and the server still forces public scope unless the case asks for internal.
-    const res = await fetch(`${base}/api/ask`, {
+    const res = await fetchRetry(`${base}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(cookie ? { cookie } : {}) },
       body: JSON.stringify({ lgaId: "obio-akpor", question: c.question, audience: c.audience, scope: c.scope ?? "public" }),
@@ -73,7 +88,7 @@ async function main() {
   fs.writeFileSync(`eval/results/${summary.ranAt.slice(0, 19).replace(/[:T]/g, "-")}.json`, JSON.stringify({ summary, rows }, null, 2));
   // Publish the run on the LGA's scoreboard when signed in.
   if (cookie) {
-    const res = await fetch(`${base}/api/eval-result`, {
+    const res = await fetchRetry(`${base}/api/eval-result`, {
       method: "POST",
       headers: { "Content-Type": "application/json", cookie },
       // Only which stored answer belongs to which case: the server rescores them itself.
