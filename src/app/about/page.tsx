@@ -58,7 +58,7 @@ export default function About() {
             </div>
             <div className="grid gap-3" style={{ color: "var(--ink-2)" }}>
               <p>AskLGA is a public good, not a business. No council pays to be listed, no resident pays to ask, and there is no advertising. It is meant to be sustained by grants, in-kind public hosting and open-source contribution.</p>
-              <p>The software is released under the MIT licence and the records under CC BY 4.0, so any state, agency or developer can run it, audit it or build on it. The record format is published as the <Link href="/standard">LGA Record Standard</Link>.</p>
+              <p>The software is released under the MIT licence and council registers (services, projects, assets, investment profiles) under CC BY 4.0, so any state, agency or developer can run it, audit it or build on it. National datasets keep their publishers&apos; terms, listed dataset by dataset below. The record format is published as the <Link href="/standard">LGA Record Standard</Link>.</p>
               <p>Personal data is handled under the Nigeria Data Protection Act 2023. Questions are stored without names or phone numbers. <Link href="/privacy">Privacy</Link></p>
             </div>
           </section>

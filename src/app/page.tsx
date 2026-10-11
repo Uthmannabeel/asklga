@@ -164,14 +164,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
               </div>
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
-              {([["Highest this month", money.top], ...(money.perHead.length ? [["Most per resident", money.perHead]] : [])] as [string, typeof money.top][]).map(([h, list]) => (
+              {([["Highest this month", money.top], ...(money.perHead.length ? [["Most per resident (2006 census)", money.perHead]] : [])] as [string, typeof money.top][]).map(([h, list]) => (
                 <div key={h as string} className="grid gap-2 content-start">
                   <p className="font-bold">{h as string}</p>
                   <ol className="register">
                     {(list as typeof money.top).map((r, i) => (
                       <li key={r.id} className="flex items-baseline justify-between gap-3" style={{ padding: "0.6rem 0" }}>
                         <span><span className="mono muted small">{i + 1}</span> <Link href={`/${r.id}/money`}>{r.name}</Link> <span className="small muted">{r.state}</span></span>
-                        <span className="mono small">{h === "Most per resident" ? naira(r.perHead) : nairaShort(r.value)}</span>
+                        <span className="mono small">{h === "Most per resident (2006 census)" ? naira(r.perHead) : nairaShort(r.value)}</span>
                       </li>
                     ))}
                   </ol>
@@ -194,7 +194,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
               ["assets", "Public assets on a map", "Health centres, schools, markets and boreholes, with their location and condition."],
               ["money", "Money from the federation", "What the council received from FAAC each month, beside its state."],
               ["investment", "Investing in the area", "Land, markets, approvals and whom to contact, in one verified profile."],
-              ["open-data", "Open data", "Every register as JSON and CSV under CC BY 4.0, for journalists, researchers and builders."],
+              ["open-data", "Open data", "Every council register as JSON and CSV under CC BY 4.0, for journalists, researchers and builders."],
             ].map(([slug, title, desc]) => (
               <li key={slug}>
                 <Link href={`/${demoId}/${slug}`}>

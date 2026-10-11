@@ -7,6 +7,7 @@ import { allocationsFor } from "@/lib/national";
  * services.json | investment.json. Approved records only, with source and last-verified fields.
  */
 const LICENCE = "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Attribute the LGA and this portal.";
+const ALLOCATIONS_TERMS = "Official statistics from the Office of the Accountant-General of the Federation, published via the National Bureau of Statistics. No open licence identified; cite OAGF and NBS. See /about#sources.";
 
 function toCsv(rows: Record<string, unknown>[], fallbackCols: string[]): string {
   const cols = rows.length ? Object.keys(rows[0]) : fallbackCols;
@@ -67,5 +68,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ lga: string; f
   if (ext === "csv") {
     return new NextResponse(toCsv(rows, COLUMNS[name] ?? []), { headers: { ...headers, "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${lga}-${name}.csv"` } });
   }
-  return NextResponse.json({ lga, dataset: name, generated: new Date().toISOString(), licence: LICENCE, rows }, { headers });
+  // FAAC rows are OAGF statistics republished via NBS with no open licence identified; they keep
+  // the publisher's terms rather than the CC BY 4.0 that covers the council registers.
+  const licence = name === "allocations" ? ALLOCATIONS_TERMS : LICENCE;
+  return NextResponse.json({ lga, dataset: name, generated: new Date().toISOString(), licence, rows }, { headers });
 }

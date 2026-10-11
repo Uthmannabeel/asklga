@@ -123,7 +123,7 @@ export default async function NationalMoney({ searchParams }: { searchParams: Pr
                         <th>Local government</th>
                         <th>State</th>
                         <th className="num">{rows.some((r) => r.netNgn != null) ? "Net paid" : "Allocation"}</th>
-                        <th className="num">Per resident</th>
+                        <th className="num">Per resident (2006 census)</th>
                       </tr>
                     </thead>
                     <tbody>

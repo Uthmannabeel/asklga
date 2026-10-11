@@ -26,7 +26,7 @@ const SORTS = {
   population: { label: "Population", get: (r: StateLgaRow) => r.population, num: true },
   area: { label: "Area km²", get: (r: StateLgaRow) => r.areaKm2, num: true },
   latest: { label: "Latest allocation", get: (r: StateLgaRow) => r.latest, num: true },
-  perHead: { label: "Per resident", get: (r: StateLgaRow) => r.perHead, num: true },
+  perHead: { label: "Per resident (2006 census)", get: (r: StateLgaRow) => r.perHead, num: true },
 } as const;
 type SortKey = keyof typeof SORTS;
 

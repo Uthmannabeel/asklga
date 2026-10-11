@@ -45,7 +45,7 @@ export default async function Compare({ searchParams }: { searchParams: Promise<
     { label: "People per km²", cell: (i) => (i.row.population && i.row.areaKm2 ? <span className="mono">{Math.round(i.row.population / i.row.areaKm2).toLocaleString("en-NG")}</span> : <span className="muted">Not available</span>) },
     { label: "Latest allocation", cell: (i) => (i.last ? <span className="mono">{naira(i.last.value)}<br /><span className="muted small">{periodLabel(i.last.period, true)}</span></span> : <span className="muted">Not loaded</span>) },
     { label: "Last 12 months", cell: (i) => (i.months12 ? <span className="mono">{nairaShort(i.total12)}{i.months12 < 12 ? <span className="muted small"> ({i.months12} months)</span> : null}</span> : <span className="muted">Not loaded</span>) },
-    { label: "Per resident, latest month", cell: (i) => (i.last?.value && i.row.population ? <span className="mono">{naira(i.last.value / i.row.population)}</span> : <span className="muted">Not available</span>) },
+    { label: "Per resident (2006 census), latest month", cell: (i) => (i.last?.value && i.row.population ? <span className="mono">{naira(i.last.value / i.row.population)}</span> : <span className="muted">Not available</span>) },
     { label: "Approved council records", cell: (i) => (i.records ? <strong>{i.records}</strong> : <span className="muted">Not joined yet</span>) },
   ];
 

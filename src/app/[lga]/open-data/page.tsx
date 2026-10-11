@@ -23,7 +23,7 @@ export default async function OpenDataPage({ params }: { params: Promise<{ lga: 
         <LgaPageHead
           lgaId={lga}
           title="Open data"
-          lede="Every approved register has a stable address in JSON and CSV. Reuse it under CC BY 4.0: credit the council and AskLGA, and say if you changed the data."
+          lede="Every approved register has a stable address in JSON and CSV. Reuse the council registers under CC BY 4.0: credit the council and AskLGA, and say if you changed the data. FAAC allocations are official statistics with no open licence identified; cite OAGF and NBS."
         />
       }
     >
