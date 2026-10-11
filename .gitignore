@@ -51,3 +51,7 @@ next-env.d.ts
 .claude/
 skills-lock.json
 scripts/geo/boundaries/
+
+# python
+__pycache__/
+*.pyc
