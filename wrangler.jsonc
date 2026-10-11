@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "asklga",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
+  // Non-secret settings. Secrets (DATABASE_URL, GEMINI_API_KEY, SESSION_SECRET, ASR_KEY, ...)
+  // are set with `npx wrangler secret put NAME`, never committed.
+  "vars": {
+    "DB_DRIVER": "neon-http",
+    "DB_BOOTSTRAP": "false",
+    "AUTO_SEED": "false"
+  }
+}

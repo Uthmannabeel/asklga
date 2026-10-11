@@ -21,7 +21,13 @@ const globalForDb = globalThis as unknown as { __asklgaDb?: Promise<Db> };
 
 async function create(): Promise<Db> {
   let db: Db;
-  if (process.env.DATABASE_URL) {
+  if (process.env.DATABASE_URL && process.env.DB_DRIVER === "neon-http") {
+    // Cloudflare Workers: a pooled TCP socket cannot be shared across requests, so query
+    // Neon over HTTP instead (stateless, safe to cache for the life of the isolate).
+    const { drizzle } = await import("drizzle-orm/neon-http");
+    const { neon } = await import("@neondatabase/serverless");
+    db = drizzle(neon(process.env.DATABASE_URL), { schema }) as unknown as Db;
+  } else if (process.env.DATABASE_URL) {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -34,6 +40,10 @@ async function create(): Promise<Db> {
     const client = new PGlite(dataDir);
     db = drizzle(client, { schema }) as unknown as Db;
   }
+
+  // Workers have no project folder on disk and start many short-lived isolates, so a
+  // deployment there sets DB_BOOTSTRAP=false and migrates/seeds from a normal Node run.
+  if (process.env.DB_BOOTSTRAP === "false") return db;
 
   // Migrations are plain SQL files applied in name order on every start; each is idempotent
   // (IF NOT EXISTS / ADD COLUMN IF NOT EXISTS). next.config.ts lists the folder in

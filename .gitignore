@@ -52,6 +52,11 @@ next-env.d.ts
 skills-lock.json
 scripts/geo/boundaries/
 
+# cloudflare (opennext build output, wrangler state, local secrets)
+/.open-next/
+/.wrangler/
+.dev.vars*
+
 # python
 __pycache__/
 *.pyc
