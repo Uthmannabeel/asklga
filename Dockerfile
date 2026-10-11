@@ -2,7 +2,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm install --omit=dev --no-audit --no-fund && cp -R node_modules /prod_modules && npm install --no-audit --no-fund
+RUN npm ci --omit=dev --no-audit --no-fund && cp -R node_modules /prod_modules && npm ci --no-audit --no-fund
 
 FROM node:22-alpine AS build
 WORKDIR /app

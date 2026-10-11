@@ -15,9 +15,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npx tsc --noEmit
       - run: npm run lint
+      - run: npm test
       - run: npm run build
         env:
           ADMIN_PASSCODE: ci-only-passcode-not-secret

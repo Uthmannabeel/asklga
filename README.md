@@ -49,7 +49,7 @@ Every one of Nigeria's 774 local government areas has a page from the first star
 - **Compare** (`/compare?lgas=a,b`): up to four LGAs side by side.
 - **Share cards and search**: per-LGA Open Graph images with the state map, `sitemap.xml` covering every LGA and state page, schema.org JSON-LD on LGA pages. Set `CONTACT_EMAIL` to show a contact address on `/about` and `/join`.
 - **The LGA Record Standard** (`/standard`): the five rules and field definitions for every register, with JSON Schemas at `/api/standard/{projects,assets,services,investment,documents,allocations}.schema.json` and a DCAT-style catalogue of everything published at `/api/catalogue.json`.
-- **Scoreboard** (`/scoreboard`): per LGA, approved records, questions and answer rate over 30 days, open gaps, and the latest measured accuracy. The eval harness posts its result to `/api/eval-result` when signed in, so accuracy is published, not claimed.
+- **Scoreboard** (`/scoreboard`): per LGA, approved records, questions and answer rate over 30 days, open gaps, and the latest test-set accuracy. The eval harness posts only which stored answer belongs to which test case; the server reloads those answers from its own question log (same LGA, last six hours, matching test question, every case once), scores them with the shared rubric in `src/lib/evalScore.mjs`, and stores the per-case result with the model and a sha256 of the test set (`JSON.stringify` of the parsed `eval/questions.json`, so line endings do not change it). Any run is inspectable at `/api/eval-result?run=<id>`. Runs from before server scoring are labelled staff-reported. A run is only as broad as the test set, and staff can still choose when to run it.
 - **Insights** (`/insights`): the demand signal. Questions by state, language and audience, and the questions residents repeat that no LGA has a record for. Only questions asked more than once are listed.
 
 ## Staff accounts
@@ -89,11 +89,12 @@ Notes: the rate limiter is per serverless instance, so limits are looser than on
 
 ## Safety and limits
 
-- **Public answers are budgeted.** Six questions a minute and sixty a day per connection, two thousand a day per LGA (`ASK_RATE_*`). Ticket, report, enquiry and feedback posts are limited to five or twenty a minute per connection. Buckets are in memory; a multi-server deployment should move them to Postgres or Redis.
-- **Sign-in is throttled** to five attempts a minute per connection, the placeholder passcode is refused, and every workspace page is gated by middleware on every request, not only by the layout. Every action re-checks the account's role and LGA.
+- **Public answers are budgeted.** Six questions a minute and sixty a day per connection, two thousand a day per LGA (`ASK_RATE_*`). Ticket, report, enquiry and feedback posts are limited to five or twenty a minute per connection. Buckets are in memory; a multi-server deployment should move them to Postgres or Redis. The connection is identified from `x-vercel-forwarded-for` on Vercel, or from the right-hand end of `X-Forwarded-For` when `TRUST_PROXY_HOPS` says how many proxies you run; otherwise forwarded headers are ignored and all callers share one bucket. Self-hosted, never expose port 3000 directly (the compose file binds it to loopback).
+- **Sign-in is throttled** in `signIn` itself, so the browser form and the JSON route share it: five attempts a minute per connection and ten per fifteen minutes per account (or for the bootstrap passcode), in memory per instance. The placeholder passcode is refused, and every workspace page is gated by middleware on every request, not only by the layout. Every action re-checks the account's role and LGA.
 - **Sessions expire** after twelve hours server-side; the cookie is signed with `SESSION_SECRET` and is `Secure` in production.
 - **Ratings and flags are bound to the answer** they belong to through a token returned by `/api/ask`, so they cannot be set on someone else's question.
 - **Instruction-like questions are refused** before the model is called, in addition to the citation and figure checks. Repeats of an unanswered question do not add duplicate rows to the data-gap queue.
+- **URL import cannot reach the private network:** redirects are followed by hand and each hop re-checked, and every address a name resolves to is checked at connect time (IPv4 and IPv6 private, loopback, link-local, CGNAT and mapped ranges), so DNS rebinding is refused.
 - **Links are scheme-checked** (http/https only) everywhere a resident or officer can enter one, and CSV cells that would run as spreadsheet formulas are neutralised.
 - **Headers:** every page is `frame-ancestors 'none'` except `/{lga}/embed`, which any site may frame through the widget; `nosniff` and a strict referrer policy are set.
 - **Privacy:** `/privacy` explains what is stored under the NDPA 2023; `/about-answers` explains the five checks behind every answer.
@@ -103,6 +104,14 @@ If `npm install` stalls behind a slow or intercepting proxy, `scripts/fetch-pkg.
 ```
 node --use-system-ca scripts/fetch-pkg.mjs zod@^4 drizzle-orm@0.45.3 @electric-sql/pglite@0.5.8
 ```
+
+## Test
+
+```
+npm test       # PII scrubbing, the answer rubric, the import address guard, client-address trust; no network or keys
+```
+
+Dependencies are pinned by `package-lock.json`; CI and the Dockerfile use `npm ci`.
 
 ## Evaluate
 
