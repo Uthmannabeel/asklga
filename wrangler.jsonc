@@ -6,11 +6,16 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "observability": { "enabled": true },
+  // Pages make several database queries; run the Worker near Neon rather than near the visitor.
+  "placement": { "mode": "smart" },
   // Non-secret settings. Secrets (DATABASE_URL, GEMINI_API_KEY, SESSION_SECRET, ASR_KEY, ...)
   // are set with `npx wrangler secret put NAME`, never committed.
   "vars": {
     "DB_DRIVER": "neon-http",
     "DB_BOOTSTRAP": "false",
-    "AUTO_SEED": "false"
+    "AUTO_SEED": "false",
+    // Read at runtime here; NEXT_PUBLIC_* is also inlined at build time, so build with
+    // NEXT_PUBLIC_BASE_URL set to the same value (`.env.local` holds localhost).
+    "NEXT_PUBLIC_BASE_URL": "https://asklga.asklga.workers.dev"
   }
 }
