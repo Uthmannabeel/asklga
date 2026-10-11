@@ -409,7 +409,7 @@ export async function seedIfEmpty(db: any) {
     lat: 4.855,
     lng: 6.99,
     intro:
-      "Obio/Akpor is one of the two local government areas that make up the Port Harcourt metropolis. The records here were compiled by AskLGA from the council's website and dated public reports, each with its source. The council has not yet confirmed them.",
+      "Obio/Akpor is one of the two local government areas that make up the Port Harcourt metropolis.",
     demo: false,
     compiled: true,
   };

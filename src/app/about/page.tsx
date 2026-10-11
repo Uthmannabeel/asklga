@@ -19,14 +19,14 @@ export default function About() {
           crumbs={[{ href: "/", label: "Nigeria" }]}
           eyebrow="About"
           title="A public answer service for local government"
-          lede="AskLGA puts every one of Nigeria's 774 local government areas on one open platform: plain-language answers in five languages, the money each council receives, and the records it publishes, each with its source."
+          lede="All 774 local government areas on one open platform: answers in five languages, council money and records, with sources."
         />
         <div className="wrap py-12 grid gap-14">
           <section className="grid gap-10 lg:grid-cols-3">
             {[
-              ["For residents", "Find out how to get a service, what is being built in your ward, and what your council received, in the language you speak. No account, no fee."],
-              ["For councils", "Publish services, projects and assets once, answer residents every day, and see what people ask that you have not yet answered. Free and open source."],
-              ["For everyone else", "Journalists, researchers, investors and civil society get the same records as open data under CC BY 4.0, through a published standard and a data catalogue."],
+              ["For residents", "Services, projects and council money, in your language. No account, no fee."],
+              ["For councils", "Publish once, answer residents daily, and see what they ask. Free and open source."],
+              ["For everyone else", "The same records as open data, under CC BY 4.0."],
             ].map(([h, p]) => (
               <div key={h} className="step">
                 <h2 style={{ fontSize: "1.25rem" }}>{h}</h2>
@@ -42,13 +42,13 @@ export default function About() {
             </div>
             <dl className="kv">
               <dt>National layer</dt>
-              <dd>Every LGA has a page from day one, built from national public data: boundaries, census figures and federation allocations. These are shown as published and linked to their source.</dd>
+              <dd>Every LGA gets a page from national data: boundaries, census and FAAC allocations, each linked to its source.</dd>
               <dt>Council layer</dt>
-              <dd>When a council joins, its data owner approves its own records: services, projects, public assets, documents and an investment profile. Only approved records are public, and only they are used to answer questions. Before a council joins, AskLGA may publish records compiled from its website and dated public reports; each names its source, and the council&apos;s pages say they are not yet confirmed.</dd>
+              <dd>A council approves its own records. Only approved records are public and used for answers. Records AskLGA compiles before a council joins are marked unconfirmed.</dd>
               <dt>Answers</dt>
-              <dd>The answer service reads only a council&apos;s published records, cites the record IDs it used, and says so when nothing covers a question. <Link href="/about-answers">How answers are checked</Link></dd>
+              <dd>Uses only published records, cites them, and says when it doesn&apos;t know. <Link href="/about-answers">How answers are checked</Link></dd>
               <dt>Accuracy</dt>
-              <dd>Answers are tested against a fixed set of questions and the results are published on the <Link href="/scoreboard">scoreboard</Link>.</dd>
+              <dd>Tested on a fixed question set; results on the <Link href="/scoreboard">scoreboard</Link>.</dd>
             </dl>
           </section>
 
@@ -57,9 +57,9 @@ export default function About() {
               <h2>Governance and funding</h2>
             </div>
             <div className="grid gap-3" style={{ color: "var(--ink-2)" }}>
-              <p>AskLGA is a public good, not a business. No council pays to be listed, no resident pays to ask, and there is no advertising. It is meant to be sustained by grants, in-kind public hosting and open-source contribution.</p>
-              <p>The software is released under the MIT licence and council registers (services, projects, assets, investment profiles) under CC BY 4.0, so any state, agency or developer can run it, audit it or build on it. National datasets keep their publishers&apos; terms, listed dataset by dataset below. The record format is published as the <Link href="/standard">LGA Record Standard</Link>.</p>
-              <p>Personal data is handled under the Nigeria Data Protection Act 2023. Questions are stored without names or phone numbers. <Link href="/privacy">Privacy</Link></p>
+              <p>A public good, not a business: no fees, no ads. Sustained by grants, public hosting and open-source contribution.</p>
+              <p>Software under MIT; council registers under CC BY 4.0; national datasets under their publishers&apos; terms (below). Format: the <Link href="/standard">LGA Record Standard</Link>.</p>
+              <p>Handled under the Nigeria Data Protection Act 2023. <Link href="/privacy">Privacy</Link></p>
             </div>
           </section>
 

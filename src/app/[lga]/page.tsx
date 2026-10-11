@@ -112,7 +112,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
               <p className="eyebrow">Council records</p>
               <p className="font-bold">{row.name} has not published its records here yet</p>
               <p className="small" style={{ color: "var(--ink-2)" }}>
-                Questions are still logged without personal details, so the council can see what residents need. The facts, map and money on this page come from national public sources.
+                Questions are still logged, without personal details, for the council. The facts, map and money here come from national sources.
               </p>
               <p className="small"><Link href="/join">If you work for this council, see how to join</Link></p>
             </div>
@@ -120,7 +120,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
             <div className="grid gap-2">
               <p className="eyebrow">How answers work here</p>
               <p className="small" style={{ color: "var(--ink-2)" }}>
-                Answers come only from the {records} records published for {row.name}, each with its source. Each answer lists the records it used. If none cover your question, you will be told, and you can pass it to an officer.
+                Answers use only the {records} published records and cite them. If none fits, it says so.
               </p>
               <p className="small"><Link href="/about-answers">How answers are checked</Link></p>
             </div>
@@ -165,14 +165,14 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
             <figure className="grid gap-2">
               <BarChart data={monthlySeries(last24, (r) => r.value)} format={naira} label={`Monthly allocation to ${row.name}, last ${last24.length} months`} />
               <figcaption className="small muted">
-                As published by {latest.sourceUrl ? <a href={latest.sourceUrl} rel="noopener">{latest.source}</a> : latest.source}. Month-on-month change and ranks are calculated from the published figures.
+                Source: {latest.sourceUrl ? <a href={latest.sourceUrl} rel="noopener">{latest.source}</a> : latest.source}.
               </figcaption>
             </figure>
           </div>
         ) : (
           <div className="empty">
             <p className="font-bold">No allocation months loaded yet</p>
-            <p className="small" style={{ color: "var(--ink-2)" }}>Figures are imported from the published monthly FAAC tables, each with its source. They will appear here as a monthly chart and ledger.</p>
+            <p className="small" style={{ color: "var(--ink-2)" }}>Monthly FAAC figures will appear here.</p>
           </div>
         )}
       </section>

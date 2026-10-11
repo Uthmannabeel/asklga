@@ -14,7 +14,7 @@ const NATIONAL = [
 
 // Shown in English on every language: the wording is a factual caveat that should not drift in translation.
 const COMPILED_BANNER =
-  "Records compiled by AskLGA from the council's website and dated public reports, each with its source. The council has not yet confirmed them.";
+  "Compiled by AskLGA from public sources. Not yet confirmed by the council.";
 
 export async function SiteHeader({ lga, demo, compiled, back }: { lga?: { id: string; name: string; state: string }; demo?: boolean; compiled?: boolean; back?: string }) {
   const lang: UiLang = await uiLang();

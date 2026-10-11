@@ -11,7 +11,7 @@ export function SiteFooter({ lead }: { lead?: React.ReactNode }) {
           <div className="grid gap-3 content-start max-w-sm">
             <Link href="/" className="wordmark" aria-label="AskLGA home"><Mark /><span>AskLGA</span></Link>
             <p>
-              A public-interest answer service for Nigeria&apos;s 774 local government areas. Free for residents and councils, open source under the MIT licence, council registers open under CC BY 4.0; national datasets under their publishers&apos; terms.
+              Free, open-source answers for Nigeria&apos;s 774 local governments. <Link href="/about#sources">Data and licences</Link>
             </p>
           </div>
           <div>
