@@ -79,7 +79,7 @@ export async function stateAllocationContext(state: string, period: string) {
   return r;
 }
 
-export type ScoreRow = DirectoryRow & { asked30: number; answered30: number; openGaps: number; accuracy: number | null; evalCases: number | null; evalAt: Date | null };
+export type ScoreRow = DirectoryRow & { asked30: number; answered30: number; openGaps: number; accuracy: number | null; evalCases: number | null; evalAt: Date | null; evalRun: number | null; evalVerified: boolean };
 
 export async function scoreboard(): Promise<ScoreRow[]> {
   const db = await getDb();
@@ -93,8 +93,8 @@ export async function scoreboard(): Promise<ScoreRow[]> {
     .groupBy(s.questions.lgaId)) q.set(r.lgaId, { asked: Number(r.asked), answered: Number(r.answered) });
   const gaps = new Map<string, number>();
   for (const r of await db.select({ lgaId: s.questions.lgaId, n: sql<number>`count(*)` }).from(s.questions).where(sql`${s.questions.gapStatus} in ('open','assigned')`).groupBy(s.questions.lgaId)) gaps.set(r.lgaId, Number(r.n));
-  const ev = new Map<string, { accuracy: number; cases: number; ranAt: Date }>();
-  for (const r of await db.select().from(s.evalRuns).orderBy(desc(s.evalRuns.ranAt))) if (!ev.has(r.lgaId)) ev.set(r.lgaId, { accuracy: r.accuracy, cases: r.cases, ranAt: r.ranAt });
+  const ev = new Map<string, { accuracy: number; cases: number; ranAt: Date; id: number; verified: boolean }>();
+  for (const r of await db.select().from(s.evalRuns).orderBy(desc(s.evalRuns.ranAt))) if (!ev.has(r.lgaId)) ev.set(r.lgaId, { accuracy: r.accuracy, cases: r.cases, ranAt: r.ranAt, id: r.id, verified: r.verified });
   return rows
     .filter((r) => r.records > 0 || r.questions > 0)
     .map((r) => ({
@@ -105,6 +105,8 @@ export async function scoreboard(): Promise<ScoreRow[]> {
       accuracy: ev.get(r.id)?.accuracy ?? null,
       evalCases: ev.get(r.id)?.cases ?? null,
       evalAt: ev.get(r.id)?.ranAt ?? null,
+      evalRun: ev.get(r.id)?.id ?? null,
+      evalVerified: ev.get(r.id)?.verified ?? false,
     }))
     .sort((a, b) => b.records - a.records || b.asked30 - a.asked30);
 }

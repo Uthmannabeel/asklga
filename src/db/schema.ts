@@ -65,6 +65,9 @@ export const evalRuns = pgTable("eval_runs", {
   figureFailures: integer("figure_failures").notNull().default(0),
   model: text("model"),
   note: text("note"),
+  testSet: text("test_set"), // sha256 of JSON.stringify(parsed eval/questions.json)
+  verified: boolean("verified").notNull().default(false), // scored by the server from stored answers
+  results: jsonb("results").$type<{ caseId: string; questionId: number | null; ok: boolean; failed: string[] }[]>(),
 });
 
 export const services = pgTable("services", {

@@ -1,6 +1,7 @@
 /**
  * Evaluation harness. Sends eval/questions.json to a running AskLGA server and scores each
- * answer against the six-point rubric from the build plan:
+ * answer against the six-point rubric from the build plan (src/lib/evalScore.mjs, shared with
+ * the server, which rescores the stored answers itself before publishing a run):
  *   correct  (answered when it should be, refused when it should be)
  *   cited    (expected record IDs present)
  *   complete (expected figures present)
@@ -15,6 +16,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { scoreCase } from "../src/lib/evalScore.mjs";
 
 const base = process.argv[2] ?? "http://localhost:3000";
 const staffName = process.argv[3];
@@ -58,21 +60,10 @@ async function main() {
       rows.push({ id: c.id, ok: false, error: r.error });
       continue;
     }
-    const cited = r.citations.map((x) => x.id);
-    const checks = {
-      correct: c.expect.answered === undefined || r.answered === c.expect.answered,
-      cited:
-        (!c.expect.cites || c.expect.cites.every((id) => cited.includes(id))) &&
-        (!c.expect.citesAny || c.expect.citesAny.some((id) => cited.includes(id))),
-      complete: !c.expect.figures || c.expect.figures.every((f) => r.answer.replace(/[,\s]/g, "").includes(f)),
-      language: r.language === c.lang || (c.lang === "pcm" && r.language === "en"),
-      plain: r.answer.split(/\s+/).length <= 140,
-      safe: !c.expect.mustNotContain || c.expect.mustNotContain.every((t) => !r.answer.includes(t)),
-    };
-    const ok = Object.values(checks).every(Boolean);
+    const { ok, checks, cited } = scoreCase(c, r);
     if (ok) pass += 1;
     if (r.figureCheck === "failed") figureFailures += 1;
-    rows.push({ id: c.id, ok, ...checks, answered: r.answered, language: r.language, cited: cited.join(" "), ms: Date.now() - started, answer: r.answer.slice(0, 200) });
+    rows.push({ id: c.id, questionId: r.questionId, ok, ...checks, answered: r.answered, language: r.language, cited: cited.join(" "), ms: Date.now() - started, answer: r.answer.slice(0, 200) });
     console.log(`${ok ? "PASS" : "FAIL"} ${c.id} ${Object.entries(checks).filter(([, v]) => !v).map(([k]) => k).join(",") || "all checks"} lang=${r.language} cited=${cited.join(",")}`);
     if (!ok) console.log("    ", r.answer);
   }
@@ -85,9 +76,11 @@ async function main() {
     const res = await fetch(`${base}/api/eval-result`, {
       method: "POST",
       headers: { "Content-Type": "application/json", cookie },
-      body: JSON.stringify({ lgaId: "obio-akpor", cases: summary.cases, pass: summary.pass, figureFailures: figureFailures, note: `eval/questions.json, ${cases.length} cases` }),
+      // Only which stored answer belongs to which case: the server rescores them itself.
+      body: JSON.stringify({ lgaId: "obio-akpor", results: rows.map((x) => ({ caseId: x.id, questionId: x.questionId ?? null })), note: `eval/questions.json, ${cases.length} cases` }),
     });
-    console.log(res.ok ? "Published to the scoreboard." : `Scoreboard publish failed: ${res.status}`);
+    const out = await res.json().catch(() => ({}));
+    console.log(res.ok ? `Published to the scoreboard: server scored ${out.pass}/${out.cases} (run ${out.runId}).` : `Scoreboard publish failed: ${res.status} ${out.error ?? ""}`);
   }
 }
 
