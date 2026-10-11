@@ -87,8 +87,9 @@ function stamp(by: string): string {
 export async function signInAction(fd: FormData) {
   const identity = String(fd.get("identity") ?? fd.get("name") ?? "");
   const secret = String(fd.get("secret") ?? fd.get("passcode") ?? "");
-  const ok = await signIn(identity, secret);
-  if (!ok) redirect("/admin?error=1");
+  const result = await signIn(identity, secret);
+  if (result === "throttled") redirect("/admin?error=wait");
+  if (result !== "ok") redirect("/admin?error=1");
   // Only same-site workspace paths may be used as the return destination.
   const next = String(fd.get("next") ?? "");
   redirect(/^\/admin(\/[a-z0-9\-/?=&]*)?$/i.test(next) && next !== "/admin" ? next : "/admin");

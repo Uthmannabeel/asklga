@@ -1,4 +1,6 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { allow } from "@/lib/ratelimit";
+import { clientIpFrom } from "@/lib/clientIp";
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { getDb, schema as s } from "@/db";
@@ -195,9 +197,23 @@ export async function signInBootstrap(name: string, given: string): Promise<bool
   return true;
 }
 
-/** Either form, chosen by whether an email was given. Used by the form and the JSON route. */
-export async function signIn(identity: string, secret: string): Promise<boolean> {
-  return identity.includes("@") ? signInWithPassword(identity, secret) : signInBootstrap(identity, secret);
+export type SignInResult = "ok" | "denied" | "throttled";
+
+/**
+ * Either form, chosen by whether an email was given. Used by the form and the JSON route, so
+ * both share one throttle: 5 attempts a minute per connection and 10 per 15 minutes per
+ * account name (or for the bootstrap passcode as a whole), whichever runs out first.
+ */
+export async function signIn(identity: string, secret: string): Promise<SignInResult> {
+  const ip = clientIpFrom(await headers());
+  const who = identity.includes("@") ? `acct:${identity.trim().toLowerCase()}` : "bootstrap";
+  if (!allow(`signin:${ip}`, 5, 60_000) || !allow(`signin:${who}`, 10, 15 * 60_000)) {
+    console.warn(`[auth] sign-in throttled for ${ip} (${who})`);
+    return "throttled";
+  }
+  const ok = identity.includes("@") ? await signInWithPassword(identity, secret) : await signInBootstrap(identity, secret);
+  if (!ok) console.warn(`[auth] failed sign-in from ${ip}`);
+  return ok ? "ok" : "denied";
 }
 
 export async function signOut() {

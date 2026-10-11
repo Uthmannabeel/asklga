@@ -26,8 +26,12 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgres://asklga:${POSTGRES_PASSWORD:-change-this-password}@db:5432/asklga
+      # One reverse proxy (Caddy/nginx) in front sets X-Forwarded-For; rate limits trust that hop only.
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
     ports:
-      - "3000:3000"
+      # Loopback only: the proxy on this host is the way in. Publishing 0.0.0.0:3000 would let
+      # clients forge X-Forwarded-For and dodge the rate limits.
+      - "127.0.0.1:3000:3000"
 
 volumes:
   pgdata:

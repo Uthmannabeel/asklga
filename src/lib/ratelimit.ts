@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { clientIpFrom } from "./clientIp";
+
+export { clientIpFrom };
 
 /**
  * In-memory rate limiting for the public endpoints. Good for a single server (the pilot);
@@ -47,9 +50,7 @@ export function allowDaily(key: string, limit: number): boolean {
 }
 
 export function clientIp(req: Request): string {
-  const h = req.headers;
-  const fwd = h.get("x-forwarded-for");
-  return (fwd ? fwd.split(",")[0] : null)?.trim() || h.get("x-real-ip") || "local";
+  return clientIpFrom(req.headers);
 }
 
 export const TOO_MANY = (retryAfterSec = 60) =>

@@ -48,6 +48,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
             </>
           )}
           {error === "1" ? <p className="small" role="alert" style={{ color: "var(--danger)" }}>{bootstrap ? "That passcode did not match." : "That email and password did not match an active account."}</p> : null}
+          {error === "wait" ? <p className="small" role="alert" style={{ color: "var(--danger)" }}>Too many sign-in attempts. Wait a few minutes and try again.</p> : null}
           {error === "lga" ? <p className="small" role="alert" style={{ color: "var(--danger)" }}>Your account is not for that LGA.</p> : null}
           {error === "role" ? <p className="small" role="alert" style={{ color: "var(--danger)" }}>Your role does not allow that action.</p> : null}
           <div><button type="submit" className="btn">Sign in</button></div>
