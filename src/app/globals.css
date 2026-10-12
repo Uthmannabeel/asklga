@@ -196,15 +196,6 @@ th { font-weight: 700; color: var(--muted); }
   .primary-nav::-webkit-scrollbar { display: none; }
   .primary-nav a { padding: 0.6rem 0; white-space: nowrap; }
 }
-.lang-code { display: none; font-family: var(--font-mono), monospace; font-weight: 700; font-size: 0.85rem; }
-@media (max-width: 479px) {
-  /* Wordmark, council name and language on one line: the menu shrinks to a globe and a code. */
-  .site-header-row.is-lga { flex-wrap: nowrap; }
-  .site-header-row.is-lga > p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lang-full { display: none; }
-  .lang-code { display: inline; }
-  .lang-menu > summary { padding: 0.45rem 0.55rem; }
-}
 
 .lang-menu { position: relative; margin-left: auto; font-size: 0.92rem; }
 .lang-menu > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.7rem; border: 1px solid var(--rule-strong); border-radius: var(--radius); min-height: 40px; }
@@ -242,40 +233,6 @@ th { font-weight: 700; color: var(--muted); }
 .finder-results a { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; color: var(--ink); text-decoration: none; border-top: 1px solid var(--rule); }
 .finder-results li:first-child a { border-top: 0; }
 .finder-results a:hover, .finder-results a:focus-visible { background: var(--canvas); }
-.finder-results button { all: unset; box-sizing: border-box; display: flex; width: 100%; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; color: var(--ink); border-top: 1px solid var(--rule); cursor: pointer; }
-.finder-results li:first-child button { border-top: 0; }
-.finder-results button:hover, .finder-results button:focus-visible { background: var(--canvas); }
-
-/* Home: the enquiry slip. A paper form addressed to one council, not a marketing hero. */
-.home-ask { padding-block: clamp(1.5rem, 5vw, 4rem) clamp(2.5rem, 6vw, 5rem); display: grid; gap: clamp(1.25rem, 3vw, 2rem); justify-items: center; }
-.home-ask h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.05; letter-spacing: -0.03em; text-align: center; max-width: 16ch; }
-.home-ask .home-sub { text-align: center; max-width: 46ch; color: var(--ink-2); font-size: 1.08rem; }
-.slip { width: 100%; max-width: 44rem; background: var(--paper); border: 1px solid var(--rule-strong); border-top: 5px solid var(--civic); border-radius: var(--radius); box-shadow: 0 1px 0 var(--rule), 0 18px 40px -24px rgba(15,23,18,0.35); }
-.slip-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.25rem 1rem; align-items: baseline; padding: 1rem 1.25rem; border-bottom: 1px dashed var(--rule-strong); }
-.slip-k { font-family: var(--font-mono), monospace; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.slip-to { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.75rem; min-width: 0; }
-.slip-name { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.01em; }
-.slip-where { color: var(--muted); font-size: 0.95rem; }
-.slip-change { all: unset; cursor: pointer; color: var(--civic); text-decoration: underline; text-underline-offset: 3px; font-size: 0.95rem; margin-left: auto; padding: 0.35rem 0; }
-.slip-change:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-.slip-pick { display: grid; gap: 0.5rem; min-width: 0; }
-.slip-input { font-size: 1.1rem; border: 2px solid var(--ink); padding: 0.6rem 0.75rem; }
-.slip-pick .slip-change { margin-left: 0; justify-self: start; }
-.slip-body { padding: 1.25rem; }
-.slip-body .measure { max-width: none; }
-.home-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 1.5rem; color: var(--muted); font-size: 0.92rem; }
-/* The bullet is one lit map dot: the same mark as the national map. */
-.home-trust span::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 1px; background: var(--lit); margin-right: 0.5rem; vertical-align: 0.1em; }
-
-/* Home: three doors to everything else. Rules, not cards. */
-.doors { display: grid; }
-.doors > a:first-child { border-top: 1px solid var(--rule-strong); }
-@media (min-width: 768px) { .doors { grid-template-columns: repeat(3, minmax(0, 1fr)); } .doors > a { border-top: 1px solid var(--rule-strong); } .doors > a + a { border-left: 1px solid var(--rule); } }
-.doors > a { display: grid; gap: 0.35rem; padding: 1.5rem 1.25rem 1.75rem; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
-.doors > a:hover { background: var(--paper); }
-.doors .door-n { font-family: var(--font-mono), monospace; font-size: 0.8rem; color: var(--civic); }
-.doors .door-t { font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; gap: 0.5rem; }
-.doors .door-d { color: var(--ink-2); font-size: 0.95rem; }
 
 .specimen { background: var(--paper); color: var(--ink); border-radius: 6px; box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 24px 48px rgba(0,0,0,0.28); overflow: hidden; }
 .specimen a { color: var(--civic); }
@@ -448,37 +405,4 @@ details.demo-banner > p { margin: 0.35rem 0 0; }
 .lt-about { grid-area: about; }
 @media (min-width: 1024px) {
   .lga-top { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-areas: "title ask" "about ask"; column-gap: 3rem; row-gap: 1rem; padding-block: 2rem 2.5rem; align-items: start; }
-}
-
-/* Ask and Speak, straight under the box. Full width on a phone so both are easy to hit. */
-.ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-@media (max-width: 479px) { .ask-actions .btn { flex: 1 1 100%; justify-content: center; } }
-.voice-note > summary { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-.voice-note > p { margin: 0.35rem 0 0; }
-
-/* Voice: the microphone button and the recording state. */
-.btn-voice { gap: 0.5rem; }
-.btn-voice svg { width: 1.1rem; height: 1.1rem; flex: none; }
-.btn-voice[aria-pressed="true"] { background: var(--paper); color: var(--danger); border-color: var(--danger); font-weight: 700; }
-.rec-dot { width: 0.6rem; height: 0.6rem; border-radius: 999px; background: var(--danger); flex: none; }
-.rec-time { font-family: var(--font-mono), monospace; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-.rec-meter { display: inline-flex; align-items: center; gap: 2px; height: 1rem; }
-.rec-meter span { width: 3px; height: 100%; background: currentColor; border-radius: 1px; transform-origin: center; transform: scaleY(0.2); transition: transform 80ms linear; }
-
-/* Motion. Everything below is off for anyone whose device asks for reduced motion, and the
-   scroll reveal only runs where the browser drives it natively (no script, no layout cost). */
-@media (prefers-reduced-motion: no-preference) {
-  .rec-dot { animation: rec-pulse 1.1s ease-in-out infinite; }
-  @keyframes rec-pulse { 50% { opacity: 0.25; } }
-
-  /* The map lights up state by state on first paint, roughly north-west to south-east. */
-  .ng-tile { animation: tile-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 14ms); }
-  .ng-tile.has-lit .ng-dot.lit { animation: dot-lit 900ms ease-out both; animation-delay: calc(var(--i, 0) * 14ms + 450ms); }
-  @keyframes tile-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  @keyframes dot-lit { 0% { background: var(--unlit); } 40% { background: var(--lit); transform: scale(1.8); } 100% { background: var(--lit); } }
-
-  @supports (animation-timeline: view()) {
-    .reveal { animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
-    @keyframes reveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-  }
 }

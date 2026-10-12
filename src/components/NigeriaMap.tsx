@@ -20,11 +20,10 @@ export function NigeriaMap({ rows, selected }: { rows: MapRow[]; selected?: stri
         return (
           <Link
             key={t.code}
-            href={current ? "/map" : `/map?state=${t.code}`}
+            href={current ? "/#map" : `/?state=${t.code}#map`}
             scroll={false}
             className={`ng-tile ${lit ? "has-lit" : ""}`}
-            // --i staggers the first-paint animation in a diagonal wave (globals.css, reduced-motion aware).
-            style={{ gridColumn: t.col + 1, gridRow: t.row + 1, "--i": t.row * 2 + t.col } as React.CSSProperties}
+            style={{ gridColumn: t.col + 1, gridRow: t.row + 1 }}
             aria-current={current ? "true" : undefined}
             aria-label={`${stateLabel(t.state)}: ${lgas.length} local government areas, ${lit} publishing records`}
             title={`${stateLabel(t.state)}, ${lgas.length} LGAs`}

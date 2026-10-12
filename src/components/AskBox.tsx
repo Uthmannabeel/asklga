@@ -106,10 +106,8 @@ export function AskBox({
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [reading, setReading] = useState(false);
   const [speechLang, setSpeechLang] = useState(SPEECH_DEFAULT[lang] ?? 0);
-  const [recSeconds, setRecSeconds] = useState(0);
   const recRef = useRef<{ stop: () => void } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const meterRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
     setPlaceholder(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
@@ -211,14 +209,8 @@ export function AskBox({
       if (ev.data.size) chunks.push(ev.data);
     };
     const cap = setTimeout(() => rec.state !== "inactive" && rec.stop(), MAX_RECORD_MS);
-    const stopMeter = startMeter(stream);
-    const started = Date.now();
-    setRecSeconds(0);
-    const tick = setInterval(() => setRecSeconds(Math.floor((Date.now() - started) / 1000)), 250);
     rec.onstop = async () => {
       clearTimeout(cap);
-      clearInterval(tick);
-      stopMeter();
       stream.getTracks().forEach((track) => track.stop());
       setListening(false);
       const blob = new Blob(chunks, { type: (rec.mimeType || type || "audio/webm").split(";")[0] });
@@ -244,37 +236,6 @@ export function AskBox({
     recRef.current = rec;
     rec.start();
     setListening(true);
-  }
-
-  /**
-   * Drives the five bars beside the stop button from the microphone level, so a resident can see
-   * they are being heard. Writes straight to the DOM each frame; no React state, no re-render.
-   */
-  function startMeter(stream: MediaStream): () => void {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return () => {};
-    const ctx = new Ctx();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    ctx.createMediaStreamSource(stream).connect(analyser);
-    const data = new Uint8Array(analyser.fftSize);
-    let frame = 0;
-    const draw = () => {
-      analyser.getByteTimeDomainData(data);
-      let peak = 0;
-      for (const v of data) peak = Math.max(peak, Math.abs(v - 128));
-      const level = Math.min(1, peak / 64);
-      meterRef.current?.querySelectorAll("span").forEach((bar, i) => {
-        const shape = [0.55, 0.85, 1, 0.85, 0.55][i] ?? 1;
-        bar.style.transform = `scaleY(${Math.max(0.2, level * shape)})`;
-      });
-      frame = requestAnimationFrame(draw);
-    };
-    frame = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(frame);
-      ctx.close().catch(() => {});
-    };
   }
 
   /** A device voice for the answer's language, if this phone or browser has one. */
@@ -369,36 +330,6 @@ export function AskBox({
   const answerLang = result ? (HTML_LANG[result.language] ?? "en-NG") : "en-NG";
   const canReachPerson = problem?.kind === "offline" || problem?.kind === "busy" || problem?.kind === "server";
 
-  // Ask and Speak sit straight under the box, so voice is on the first screen of a phone.
-  const actions = (
-    <div className="ask-actions">
-      <button type="submit" className="btn" disabled={busy || !q.trim()} aria-busy={busy}>{busy ? t.looking : t.getAnswer}</button>
-      {busy ? <button type="button" className="btn btn-quiet" onClick={() => abortRef.current?.abort()}>{t.stop}</button> : null}
-      {speechSupported ? (
-        <>
-          <button type="button" className="btn btn-quiet btn-voice" onClick={toggleListen} aria-pressed={listening} disabled={busy || transcribing} aria-busy={transcribing}>
-            {listening ? (
-              <>
-                <span className="rec-dot" aria-hidden="true" />
-                <span>{t.stopRecording}</span>
-                <span className="rec-meter" ref={meterRef} aria-hidden="true"><span /><span /><span /><span /><span /></span>
-                <span className="rec-time" aria-hidden="true">0:{String(recSeconds).padStart(2, "0")} / 0:{MAX_RECORD_MS / 1000}</span>
-              </>
-            ) : (
-              <>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="9" y="3" width="6" height="11" rx="3" />
-                  <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-                </svg>
-                <span>{transcribing ? t.transcribing : t.speak}</span>
-              </>
-            )}
-          </button>
-        </>
-      ) : null}
-    </div>
-  );
-
   const personForm = (
     <form action={sendTicket} className="grid gap-2 border border-rule p-3" style={{ borderRadius: 2 }}>
       <p className="small">{t.ticketIntro}</p>
@@ -437,23 +368,6 @@ export function AskBox({
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && !coarsePointer) submit(e);
           }}
         />
-        {actions}
-        {speechSupported ? (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 small muted">
-            <label className="flex items-center gap-1">
-              <span>{t.voiceLanguage}</span>
-              <select value={speechLang} onChange={(e) => setSpeechLang(Number(e.target.value))} style={{ width: "auto", padding: "0.25rem 0.4rem" }}>
-                {SPEECH_LANGS.map((l, i) => (
-                  <option key={l.label} value={i}>{l.label}</option>
-                ))}
-              </select>
-            </label>
-            <details className="voice-note">
-              <summary>{t.voiceByShort}</summary>
-              <p>{t.voiceBy}{note ? <span lang="en"> {note}</span> : null}</p>
-            </details>
-          </div>
-        ) : null}
         <p id={`ask-help-${lgaId}`} className="small muted">{t.askHelp}</p>
         {suggestions.length && !result && !busy ? (
           <div className="grid gap-1" lang="en">
@@ -467,6 +381,26 @@ export function AskBox({
             </ul>
           </div>
         ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="submit" className="btn" disabled={busy || !q.trim()} aria-busy={busy}>{busy ? t.looking : t.getAnswer}</button>
+          {busy ? <button type="button" className="btn btn-quiet" onClick={() => abortRef.current?.abort()}>{t.stop}</button> : null}
+          {speechSupported ? (
+            <>
+              <button type="button" className={`btn btn-quiet ${listening ? "font-bold" : ""}`} onClick={toggleListen} aria-pressed={listening} disabled={busy || transcribing} aria-busy={transcribing}>
+                {listening ? t.stopRecording : transcribing ? t.transcribing : t.speak}
+              </button>
+              <label className="small muted flex items-center gap-1">
+                <span>{t.voiceLanguage}</span>
+                <select value={speechLang} onChange={(e) => setSpeechLang(Number(e.target.value))} style={{ width: "auto", padding: "0.25rem 0.4rem" }}>
+                  {SPEECH_LANGS.map((l, i) => (
+                    <option key={l.label} value={i}>{l.label}</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : null}
+        </div>
+        {speechSupported ? <p className="small muted">{t.voiceBy}{note ? <span lang="en"> {note}</span> : null}</p> : null}
       </form>
 
       <div aria-live="polite" className="grid gap-4">

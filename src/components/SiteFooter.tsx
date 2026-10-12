@@ -17,8 +17,7 @@ export function SiteFooter({ lead }: { lead?: React.ReactNode }) {
           <div>
             <h2>For residents</h2>
             <ul>
-              <li><Link href="/">Ask a question</Link></li>
-              <li><Link href="/map">Map of all LGAs</Link></li>
+              <li><Link href="/">Find your LGA</Link></li>
               <li><Link href="/money">Money to local governments</Link></li>
               <li><Link href="/compare">Compare LGAs</Link></li>
               <li><Link href="/about-answers">How answers are checked</Link></li>
