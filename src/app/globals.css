@@ -268,8 +268,9 @@ th { font-weight: 700; color: var(--muted); }
 .home-trust span::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 1px; background: var(--lit); margin-right: 0.5rem; vertical-align: 0.1em; }
 
 /* Home: three doors to everything else. Rules, not cards. */
-.doors { display: grid; border-top: 1px solid var(--rule-strong); }
-@media (min-width: 768px) { .doors { grid-template-columns: repeat(3, minmax(0, 1fr)); } .doors > a + a { border-left: 1px solid var(--rule); } }
+.doors { display: grid; }
+.doors > a:first-child { border-top: 1px solid var(--rule-strong); }
+@media (min-width: 768px) { .doors { grid-template-columns: repeat(3, minmax(0, 1fr)); } .doors > a { border-top: 1px solid var(--rule-strong); } .doors > a + a { border-left: 1px solid var(--rule); } }
 .doors > a { display: grid; gap: 0.35rem; padding: 1.5rem 1.25rem 1.75rem; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
 .doors > a:hover { background: var(--paper); }
 .doors .door-n { font-family: var(--font-mono), monospace; font-size: 0.8rem; color: var(--civic); }
