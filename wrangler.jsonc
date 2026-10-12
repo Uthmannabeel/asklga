@@ -8,6 +8,13 @@
   "observability": { "enabled": true },
   // Pages make several database queries; run the Worker near Neon rather than near the visitor.
   "placement": { "mode": "smart" },
+  // asklga.ng is a zone on this Cloudflare account; custom domains create their own DNS records.
+  // Keep asklga.asklga.workers.dev working alongside the custom domain.
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "asklga.ng", "custom_domain": true },
+    { "pattern": "www.asklga.ng", "custom_domain": true }
+  ],
   // Non-secret settings. Secrets (DATABASE_URL, GEMINI_API_KEY, SESSION_SECRET, ASR_KEY, ...)
   // are set with `npx wrangler secret put NAME`, never committed.
   "vars": {
@@ -16,6 +23,6 @@
     "AUTO_SEED": "false",
     // Read at runtime here; NEXT_PUBLIC_* is also inlined at build time, so build with
     // NEXT_PUBLIC_BASE_URL set to the same value (`.env.local` holds localhost).
-    "NEXT_PUBLIC_BASE_URL": "https://asklga.asklga.workers.dev"
+    "NEXT_PUBLIC_BASE_URL": "https://asklga.ng"
   }
 }
