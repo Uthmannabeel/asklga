@@ -2,11 +2,13 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LgaFinder, type FinderRow } from "@/components/LgaFinder";
-import { NigeriaMap } from "@/components/NigeriaMap";
+import { NationalMap, type NationalRow } from "@/components/NationalMap";
 import { AnswerSpecimen } from "@/components/AnswerSpecimen";
 import { directory, nationalSummary } from "@/lib/national";
-import { TILES, stateLabel, stateSlug, tileByCode } from "@/lib/ngTiles";
-import { month, naira, nairaShort, periodLabel, periods } from "@/lib/money";
+import { TILES, stateLabel, stateSlug } from "@/lib/ngTiles";
+import { desc, eq, sql } from "drizzle-orm";
+import { getDb, schema as s } from "@/db";
+import { month, nairaShort, periodLabel, periods } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -18,27 +20,25 @@ const Arrow = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" className="task-arrow"><path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
 );
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
-  const { state } = await searchParams;
+export default async function Home() {
   const rows = await directory();
   const sum = await nationalSummary(rows);
-  const tile = tileByCode(state);
   const demo = rows.find((r) => r.demo) ?? rows.find((r) => r.id === "obio-akpor");
   const demoId = demo?.id ?? "obio-akpor";
   const finderRows: FinderRow[] = rows.map((r) => [r.id, r.name, r.state, r.records > 0 ? 1 : 0]);
-  const stateRows = tile ? rows.filter((r) => r.state === tile.state) : [];
-  const publishing = rows.filter((r) => r.records > 0);
-  const latestPeriod = (await periods())[0];
+  const allPeriods = await periods();
+  const latestPeriod = allPeriods[0];
   const monthRows = latestPeriod ? await month(latestPeriod) : [];
+  const perHead = new Map(monthRows.map((r) => [r.id, r.perHead]));
+  const mapRows: NationalRow[] = rows.map((r) => [r.id, r.name, r.state, r.records > 0 ? 1 : 0, perHead.get(r.id) ?? null]);
   const money = latestPeriod && monthRows.length
-    ? {
-        period: latestPeriod,
-        total: monthRows.reduce((n, r) => n + r.value, 0),
-        count: monthRows.length,
-        top: monthRows.slice(0, 5),
-        perHead: monthRows.filter((r) => r.perHead != null).sort((a, b) => b.perHead! - a.perHead!).slice(0, 5),
-      }
+    ? { period: latestPeriod, total: monthRows.reduce((n, r) => n + r.value, 0), count: monthRows.length }
     : null;
+  // Proof figures, each read from the database and linked to where it can be checked.
+  const db = await getDb();
+  const [evalRun] = await db.select().from(s.evalRuns).where(eq(s.evalRuns.verified, true)).orderBy(desc(s.evalRuns.ranAt)).limit(1);
+  const [allocCount] = await db.select({ n: sql<number>`count(*)` }).from(s.allocations);
+  const firstPeriod = allPeriods.at(-1);
 
   return (
     <>
@@ -57,11 +57,47 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
                 <LgaFinder rows={finderRows} states={TILES.map((t) => ({ slug: stateSlug(t.state), label: stateLabel(t.state) }))} label="Which local government area do you live in?" />
               </div>
               <p className="small muted">
-                Not sure? <Link href="#map">Pick your state on the map</Link>. Or try the pilot council, <Link href={`/${demoId}`}>{demo?.name ?? "Obio/Akpor"}</Link>.
+                Not sure? <Link href="/compare">Browse by state</Link>. Or try the pilot council, <Link href={`/${demoId}`}>{demo?.name ?? "Obio/Akpor"}</Link>.
               </p>
+              <div className="hero-voice">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                <p>
+                  <strong>Or say it out loud.</strong> Speech in Hausa, Yoruba, Igbo and Nigerian English is transcribed by N-ATLAS, NCAIR&apos;s open speech models. <Link href={`/${demoId}`}>Try it with {demo?.name ?? "Obio/Akpor"}</Link>
+                </p>
+              </div>
             </div>
             <AnswerSpecimen />
           </div>
+        </section>
+
+        {/* 1b. Proof: figures a judge or a journalist can check, each linked to its evidence. */}
+        <section className="proof-strip" aria-label="AskLGA in figures">
+          <dl className="wrap">
+            {evalRun ? (
+              <div>
+                <dt className="sr-only">Answer accuracy</dt>
+                <dd className="proof-n">{evalRun.pass}/{evalRun.cases}</dd>
+                <dd className="proof-l">test questions answered correctly, scored by the server. <Link href="/scoreboard">Scoreboard</Link></dd>
+              </div>
+            ) : null}
+            <div>
+              <dt className="sr-only">Local government pages</dt>
+              <dd className="proof-n">{sum.lgas}</dd>
+              <dd className="proof-l">local government pages, each with its official GRID3 boundary</dd>
+            </div>
+            {Number(allocCount?.n) ? (
+              <div>
+                <dt className="sr-only">Allocation records</dt>
+                <dd className="proof-n">{Number(allocCount.n).toLocaleString("en-NG")}</dd>
+                <dd className="proof-l">monthly FAAC allocations{firstPeriod && latestPeriod ? `, ${periodLabel(firstPeriod, true)} to ${periodLabel(latestPeriod, true)}` : ""}. <Link href="/money">Money</Link></dd>
+              </div>
+            ) : null}
+            <div>
+              <dt className="sr-only">Languages</dt>
+              <dd className="proof-n">5</dd>
+              <dd className="proof-l">languages, typed or spoken: English, Pidgin, Hausa, Yoruba, Igbo</dd>
+            </div>
+          </dl>
         </section>
 
         {/* 2. How it works, in three plain steps. */}
@@ -86,100 +122,35 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
           </ol>
         </section>
 
-        {/* 3. The national map: the signature. */}
-        <section id="map" className="bg-canvas" style={{ borderBlock: "1px solid var(--rule)", scrollMarginTop: "1rem" }}>
-          <div className="wrap py-16 md:py-20 grid gap-10">
-            <div className="grid gap-3 measure">
-              <p className="eyebrow">The national layer</p>
-              <h2>{sum.lgas} local governments. One map.</h2>
-              <p className="lede">Each square is a state; each dot is one of its areas. Pick a state.</p>
-            </div>
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] items-start">
-              <div className="grid gap-4">
-                <NigeriaMap rows={rows} selected={tile?.code} />
-                <p className="small muted flex flex-wrap gap-x-5 gap-y-1">
-                  <span><span className="legend-dot" style={{ background: "var(--lit)" }} />Publishing records</span>
-                  <span><span className="legend-dot" style={{ background: "var(--unlit)" }} />Has a page, not yet joined</span>
-                </p>
-              </div>
-              <div className="panel grid gap-5">
-                {tile ? (
-                  <>
-                    <div className="flex items-baseline justify-between gap-4">
-                      <h3 style={{ fontSize: "1.5rem" }}>{stateLabel(tile.state)}</h3>
-                      <Link href="/#map" scroll={false} className="small">Clear</Link>
-                    </div>
-                    <p className="small muted">{stateRows.length} local government areas, {stateRows.filter((r) => r.records > 0).length} publishing records.</p>
-                    <Link href={`/state/${stateSlug(tile.state)}`} className="btn btn-sm justify-self-start">Open the {stateLabel(tile.state)} page</Link>
-                    <ul className="grid gap-x-6 sm:grid-cols-2" style={{ columnGap: "1.5rem" }}>
-                      {stateRows.map((r) => (
-                        <li key={r.id} style={{ borderTop: "1px solid var(--rule)" }}>
-                          <Link href={`/${r.id}`} className="flex items-center justify-between gap-2 py-2 no-underline hover:underline" style={{ color: "var(--ink)" }}>
-                            <span>{r.name}</span>
-                            {r.records > 0 ? <span className="legend-dot" style={{ background: "var(--lit)", marginRight: 0 }} title="Publishing" /> : null}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <>
-                    <dl className="grid grid-cols-2 gap-6">
-                      <div className="stat"><dt className="stat-l">Local government areas</dt><dd className="stat-n">{sum.lgas}</dd></div>
-                      <div className="stat"><dt className="stat-l">States, plus the FCT</dt><dd className="stat-n">{sum.states}</dd></div>
-                      <div className="stat"><dt className="stat-l">Languages</dt><dd className="stat-n">5</dd></div>
-                      <div className="stat"><dt className="stat-l">Published records</dt><dd className="stat-n">{sum.records}</dd></div>
-                    </dl>
-                    <div className="grid gap-2" style={{ borderTop: "1px solid var(--rule)", paddingTop: "1.25rem" }}>
-                      <p className="font-bold">Publishing now</p>
-                      {publishing.length ? (
-                        <ul className="grid gap-1">
-                          {publishing.map((r) => (
-                            <li key={r.id}><Link href={`/${r.id}`}>{r.name}</Link> <span className="muted small">{stateLabel(r.state)}{r.demo ? ", demo records" : ""}</span></li>
-                          ))}
-                        </ul>
-                      ) : <p className="small muted">No council has published yet.</p>}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 3b. Money: only once published FAAC months are loaded. */}
+        {/* 3. The signature: every LGA on one map, shaded by money per resident. */}
         {money ? (
-          <section className="wrap py-16 md:py-20 grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
-            <div className="grid gap-3 content-start">
-              <p className="eyebrow">Federation Account (FAAC), {periodLabel(money.period, true)}</p>
-              <h2>Follow the money to every council</h2>
-              <p className="lede">{nairaShort(money.total)} went to {money.count} local governments this month.</p>
-              <div className="flex flex-wrap gap-3 mt-2">
-                <Link href="/money" className="btn">Allocations across Nigeria</Link>
-                <Link href="/compare" className="btn btn-quiet">Compare councils</Link>
-              </div>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {([["Highest this month", money.top], ...(money.perHead.length ? [["Most per resident (2006 census)", money.perHead]] : [])] as [string, typeof money.top][]).map(([h, list]) => (
-                <div key={h as string} className="grid gap-2 content-start">
-                  <p className="font-bold">{h as string}</p>
-                  <ol className="register">
-                    {(list as typeof money.top).map((r, i) => (
-                      <li key={r.id} className="flex items-baseline justify-between gap-3" style={{ padding: "0.6rem 0" }}>
-                        <span><span className="mono muted small">{i + 1}</span> <Link href={`/${r.id}/money`}>{r.name}</Link> <span className="small muted">{r.state}</span></span>
-                        <span className="mono small">{h === "Most per resident (2006 census)" ? naira(r.perHead) : nairaShort(r.value)}</span>
-                      </li>
-                    ))}
-                  </ol>
+          <section id="map" className="bg-canvas" style={{ borderBlock: "1px solid var(--rule)", scrollMarginTop: "1rem" }}>
+            <div className="wrap py-16 md:py-20 grid gap-8">
+              <div className="flex flex-wrap items-end justify-between gap-6">
+                <div className="grid gap-3 measure">
+                  <p className="eyebrow">Federation Account (FAAC), {periodLabel(money.period, true)}</p>
+                  <h2>Follow the money to all {sum.lgas} councils</h2>
+                  <p className="lede">{nairaShort(money.total)} went to {money.count} local governments this month. Darker areas got more per resident.</p>
                 </div>
-              ))}
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/money" className="btn">All allocations</Link>
+                  <Link href="/compare" className="btn btn-quiet">Compare councils</Link>
+                </div>
+              </div>
+              <NationalMap rows={mapRows} period={periodLabel(money.period, true)} />
+              <p className="small muted">
+                Allocations as published by the Office of the Accountant-General, via the National Bureau of Statistics. Per resident uses the 2006 census, so it shows relative weight, not spending per person. Boundaries: GRID3 Nigeria via geoBoundaries, CC BY 4.0. <Link href="/about#sources">Sources</Link>
+              </p>
             </div>
           </section>
         ) : null}
 
         {/* 4. What a page gives you. */}
         <section className="wrap py-16 md:py-20 grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
-          <h2>On every LGA page</h2>
+          <div className="grid gap-3 content-start">
+            <h2>On every LGA page</h2>
+            <p className="muted">The links below open the pilot council, {demo?.name ?? "Obio/Akpor"}, whose records are compiled from its own website and dated reports.</p>
+          </div>
           <ul className="task-list">
             {[
               ["services", "Services and how to get them", "Who can apply, what to bring, where to go."],
@@ -203,7 +174,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
         {/* 5. Why an answer can be trusted. */}
         <section className="bg-canvas" style={{ borderTop: "1px solid var(--rule)" }}>
           <div className="wrap py-16 md:py-20 grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
-            <h2>Built so you can check every answer</h2>
+            <div className="grid gap-3 content-start">
+              <h2>Built so you can check every answer</h2>
+              <p className="muted">A wrong answer from government is worse than none. These are the rules every answer follows.</p>
+            </div>
             <div>
               {[
                 ["Published records only", <>Never the open web. <Link href="/about-answers">How answers are checked</Link></>],
@@ -219,6 +193,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
               ))}
             </div>
           </div>
+        </section>
+
+        {/* 5b. What it is built on. Names, not logos: these are sources and tools, not endorsements. */}
+        <section className="wrap py-12 grid gap-5" aria-labelledby="built-on">
+          <h2 id="built-on" className="eyebrow" style={{ fontSize: "0.8rem", letterSpacing: "0.02em" }}>Built on open public data and open models</h2>
+          <ul className="credits">
+            <li><strong>N-ATLAS</strong><span>Speech recognition, NCAIR</span></li>
+            <li><strong>GRID3 Nigeria</strong><span>LGA boundaries</span></li>
+            <li><strong>OAGF and NBS</strong><span>FAAC allocations</span></li>
+            <li><strong>NBS</strong><span>2006 census population</span></li>
+            <li><strong>Council records</strong><span>Services, projects, notices</span></li>
+          </ul>
         </section>
 
         {/* 6. For councils. */}

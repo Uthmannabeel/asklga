@@ -406,3 +406,53 @@ details.demo-banner > p { margin: 0.35rem 0 0; }
 @media (min-width: 1024px) {
   .lga-top { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-areas: "title ask" "about ask"; column-gap: 3rem; row-gap: 1rem; padding-block: 2rem 2.5rem; align-items: start; }
 }
+
+/* ---------- Home v3: voice line, proof strip, national map, credits ---------- */
+.hero-voice { display: grid; grid-template-columns: auto 1fr; gap: 0.85rem; align-items: start; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 1.25rem; max-width: 36rem; }
+.hero-voice svg { width: 2.25rem; height: 2.25rem; padding: 0.45rem; border: 1px solid rgba(255,255,255,0.45); border-radius: 999px; color: #fff; }
+.hero-voice p { color: var(--on-band-muted); font-size: 0.95rem; line-height: 1.5; }
+.hero-voice strong { color: #fff; }
+
+.proof-strip { border-bottom: 1px solid var(--rule); background: var(--paper); }
+.proof-strip dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.proof-strip dl > div { display: grid; gap: 0.35rem; align-content: start; padding: 1.5rem 1.5rem 1.6rem 0; }
+.proof-strip dl > div + div { border-left: 1px solid var(--rule); padding-left: 1.5rem; }
+.proof-n { font-family: var(--font-mono), monospace; font-weight: 700; font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.4rem); letter-spacing: -0.03em; line-height: 1; color: var(--civic-deep); }
+.proof-l { font-size: 0.9rem; color: var(--ink-2); line-height: 1.4; }
+@media (max-width: 640px) {
+  .proof-strip dl { grid-template-columns: 1fr 1fr; }
+  .proof-strip dl > div { padding: 1.1rem 0.9rem 1.2rem 0; }
+  .proof-strip dl > div + div { border-left: 0; padding-left: 0; }
+  .proof-strip dl > div:nth-child(even) { border-left: 1px solid var(--rule); padding-left: 0.9rem; }
+  .proof-strip dl > div:nth-child(n+3) { border-top: 1px solid var(--rule); }
+}
+
+.nmap { display: grid; gap: 1.5rem; }
+@media (min-width: 1024px) { .nmap { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 2.5rem; align-items: start; } }
+.nmap-figure { display: grid; gap: 0.75rem; min-width: 0; }
+.nmap-svg { width: 100%; height: auto; display: block; background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 0.75rem; touch-action: manipulation; }
+.nmap-wait { aspect-ratio: 600 / 487; background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; display: grid; place-items: center; padding: 1rem; text-align: center; }
+.nmap-lgas path { stroke: #ffffff; stroke-width: 0.35; stroke-linejoin: round; cursor: pointer; }
+.nmap-lgas a:hover path { stroke: var(--ink); stroke-width: 0.8; }
+.nmap-states path { fill: none; stroke: var(--ink); stroke-opacity: 0.55; stroke-width: 0.7; stroke-linejoin: round; pointer-events: none; }
+.nmap-pub { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linejoin: round; pointer-events: none; }
+.nmap-active { fill: none; stroke: #f2b705; stroke-width: 2.4; stroke-linejoin: round; pointer-events: none; }
+.nmap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; }
+.nmap-scale { display: inline-flex; }
+.nmap-scale span { width: 1.6rem; height: 0.7rem; }
+.nmap-key-pub::before { content: ""; display: inline-block; width: 0.9rem; height: 0.7rem; border: 2px solid var(--ink); margin-right: 0.4rem; vertical-align: -0.05em; }
+.nmap-read { display: grid; gap: 0.75rem; align-content: start; background: var(--paper); border: 1px solid var(--rule-strong); border-top: 4px solid var(--civic); border-radius: 6px; padding: 1.25rem; min-height: 18rem; }
+.nmap-name { font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; line-height: 1.1; }
+
+.credits { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); border-top: 1px solid var(--rule-strong); }
+.credits li { display: grid; gap: 0.15rem; padding: 0.9rem 1rem 0.9rem 0; border-bottom: 1px solid var(--rule); }
+.credits strong { font-size: 1.02rem; }
+.credits span { font-size: 0.86rem; color: var(--muted); }
+
+/* Council page: the name and intro sit at the top of the left column, not spread down it. */
+@media (min-width: 1024px) { .lga-top { grid-template-rows: auto 1fr; } }
+.onfile { display: grid; border-top: 1px solid var(--rule-strong); }
+.onfile a { display: grid; grid-template-columns: 3.25rem 1fr; gap: 0.75rem; align-items: baseline; padding: 0.8rem 0; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
+.onfile a:hover .font-bold { text-decoration: underline; color: var(--civic); }
+.onfile-n { font-size: 1.6rem; font-weight: 700; color: var(--civic-deep); letter-spacing: -0.03em; line-height: 1; }
+.onfile-l { display: grid; gap: 0.1rem; }

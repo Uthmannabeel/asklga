@@ -7,7 +7,7 @@ import { StateMap, NationalLocator } from "@/components/StateMap";
 import { BarChart } from "@/components/BarChart";
 import { formatDate, ordinal, pct } from "@/lib/format";
 import { dict, fill, uiLang } from "@/lib/i18n";
-import { getLga, listProjects, listServices } from "@/lib/queries";
+import { getLga, listAssets, listDocuments, listProjects, listServices } from "@/lib/queries";
 import { directory, lgaRecordCount } from "@/lib/national";
 import { ledger, monthlySeries, naira, nairaShort, periodLabel, rankFor } from "@/lib/money";
 import { lgaFacts } from "@/lib/facts";
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lga: stri
 
 export default async function LgaHome({ params }: { params: Promise<{ lga: string }> }) {
   const { lga } = await params;
-  const [row, projects, services, lang, records, money, dir] = await Promise.all([getLga(lga), listProjects(lga), listServices(lga), uiLang(), lgaRecordCount(lga), ledger(lga), directory()]);
+  const [row, projects, services, lang, records, money, dir, assets, docs] = await Promise.all([getLga(lga), listProjects(lga), listServices(lga), uiLang(), lgaRecordCount(lga), ledger(lga), directory(), listAssets(lga), listDocuments(lga, "public")]);
   if (!row) notFound();
   const t = dict(lang);
   const active = projects.filter((p) => p.status === "ongoing" || p.status === "stalled").slice(0, 5);
@@ -117,12 +117,26 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
               <p className="small"><Link href="/join">If you work for this council, see how to join</Link></p>
             </div>
           ) : (
-            <div className="grid gap-2">
-              <p className="eyebrow">How answers work here</p>
+            <div className="grid gap-3">
+              <p className="eyebrow">Records on file</p>
+              <ul className="onfile">
+                {([
+                  ["projects", "Projects", projects.length, [["stalled", "stalled"], ["ongoing", "in progress"], ["completed", "completed"]].map(([k, l]) => { const n = projects.filter((p) => p.status === k).length; return n ? `${n} ${l}` : null; }).filter(Boolean).join(", ")],
+                  ["services", "Services", services.length, "How to apply, what to bring, where to go"],
+                  ["assets", "Public assets", assets.length, "Mapped clinics, schools, markets and more"],
+                  ["documents", "Documents", docs.length, "Notices and reports, searchable"],
+                ] as [string, string, number, string][]).map(([slug, label, n, note]) => (
+                  <li key={slug}>
+                    <Link href={`/${lga}/${slug}`}>
+                      <span className="onfile-n mono">{n}</span>
+                      <span className="onfile-l"><span className="font-bold">{label}</span><span className="small muted">{note}</span></span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
               <p className="small" style={{ color: "var(--ink-2)" }}>
-                Answers use only the {records} published records and cite them. If none fits, it says so.
+                Answers use only these {records} records and cite them. If none fits, the answer says so. <Link href="/about-answers">How answers are checked</Link>
               </p>
-              <p className="small"><Link href="/about-answers">How answers are checked</Link></p>
             </div>
           )}
           <div className="grid gap-2" style={{ borderTop: "1px solid var(--rule)", paddingTop: "1.25rem" }}>
