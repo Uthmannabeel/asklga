@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb, schema as s } from "@/db";
+import { memo } from "./memo";
 
 /**
  * FAAC allocation queries. Figures are shown exactly as published; the only arithmetic here is
@@ -45,16 +46,22 @@ export async function rankFor(lgaId: string, state: string, period: string) {
   };
 }
 
-export async function periods(): Promise<string[]> {
-  const db = await getDb();
-  const rows = await db.selectDistinct({ p: s.allocations.period }).from(s.allocations).orderBy(desc(s.allocations.period));
-  return rows.map((r) => r.p);
+export function periods(): Promise<string[]> {
+  return memo("money:periods", async () => {
+    const db = await getDb();
+    const rows = await db.selectDistinct({ p: s.allocations.period }).from(s.allocations).orderBy(desc(s.allocations.period));
+    return rows.map((r) => r.p);
+  });
 }
 
 export type MonthRow = { id: string; name: string; state: string; population: number | null; grossNgn: number | null; netNgn: number | null; value: number; perHead: number | null };
 
 /** Every LGA's allocation for one month, highest first. */
-export async function month(period: string): Promise<MonthRow[]> {
+export function month(period: string): Promise<MonthRow[]> {
+  return memo(`money:month:${period}`, () => readMonth(period));
+}
+
+async function readMonth(period: string): Promise<MonthRow[]> {
   const db = await getDb();
   const rows = await db
     .select({ id: s.lgas.id, name: s.lgas.name, state: s.lgas.state, population: s.lgas.population, grossNgn: s.allocations.grossNgn, netNgn: s.allocations.netNgn })

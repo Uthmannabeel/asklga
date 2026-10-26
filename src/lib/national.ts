@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { getDb, schema as s } from "@/db";
+import { memo } from "./memo";
 
 /**
  * National-layer queries: the directory of all 774 LGAs with how much each has published,
@@ -16,7 +17,11 @@ export type DirectoryRow = {
   questions: number;
 };
 
-export async function directory(): Promise<DirectoryRow[]> {
+export function directory(): Promise<DirectoryRow[]> {
+  return memo("national:directory", readDirectory);
+}
+
+async function readDirectory(): Promise<DirectoryRow[]> {
   const db = await getDb();
   const lgas = await db.select({ id: s.lgas.id, name: s.lgas.name, state: s.lgas.state, zone: s.lgas.zone, demo: s.lgas.demo }).from(s.lgas);
   const counts = new Map<string, number>();

@@ -25,6 +25,7 @@ import { getProject } from "@/lib/queries";
 import { safeUrl } from "@/lib/ratelimit";
 import { isoDateLagos } from "@/lib/format";
 import { fetchDocumentText } from "@/lib/ingest";
+import { forget } from "@/lib/memo";
 
 /**
  * Every mutating action starts with requireStaff(lgaId, minRole): a valid session, access to
@@ -202,6 +203,7 @@ export async function saveProject(fd: FormData) {
     await db.insert(s.projects).values({ id, ...values, status: newStatus });
     await db.insert(s.statusUpdates).values({ projectId: id, oldStatus: null, newStatus, note: "Record created", by });
   }
+  forget();
   revalidatePath(`/${lgaId}/projects`);
   redirect(`/admin/${lgaId}/projects/${id}`);
 }
@@ -232,6 +234,7 @@ export async function updateProjectStatus(fd: FormData) {
     })
     .where(eq(s.projects.id, id));
   await db.insert(s.statusUpdates).values({ projectId: id, oldStatus: existing.status, newStatus, note, by });
+  forget();
   revalidatePath(`/${existing.lgaId}/projects/${id}`);
   redirect(`/admin/${existing.lgaId}/projects/${id}`);
 }
@@ -244,6 +247,7 @@ export async function moderateReport(fd: FormData) {
   await requireStaff(rep.lgaId, "editor");
   const status = str(fd, "status", 20) === "approved" ? "approved" : "rejected";
   await db.update(s.photoReports).set({ status }).where(eq(s.photoReports.id, id));
+  forget();
   revalidatePath(`/${rep.lgaId}/projects/${rep.projectId}`);
   redirect(`/admin/${rep.lgaId}/projects/${rep.projectId}`);
 }
@@ -280,6 +284,7 @@ export async function saveService(fd: FormData) {
     id = await nextId(db, "services", lgaId, "S");
     await db.insert(s.services).values({ id, ...values });
   }
+  forget();
   revalidatePath(`/${lgaId}/services`);
   redirect(`/admin/${lgaId}/services`);
 }
@@ -314,6 +319,7 @@ export async function saveAsset(fd: FormData) {
     id = await nextId(db, "assets", lgaId, "A");
     await db.insert(s.assets).values({ id, ...values });
   }
+  forget();
   revalidatePath(`/${lgaId}/assets`);
   redirect(`/admin/${lgaId}/assets`);
 }
@@ -343,6 +349,7 @@ export async function saveProfileSection(fd: FormData) {
     await ownedBy(exists[0], lgaId);
     await db.update(s.profileSections).set(values).where(eq(s.profileSections.id, id));
   } else await db.insert(s.profileSections).values({ id, ...values });
+  forget();
   revalidatePath(`/${lgaId}/investment`);
   redirect(`/admin/${lgaId}/investment`);
 }
@@ -381,6 +388,7 @@ export async function saveDocument(fd: FormData) {
     await db.insert(s.documents).values({ id, ...values });
   }
   await writeChunks(db, id, lgaId, visibility, body);
+  forget();
   revalidatePath(`/${lgaId}/documents`);
   redirect(`/admin/${lgaId}/documents`);
 }
@@ -439,6 +447,7 @@ export async function refetchDocument(fd: FormData) {
     .set({ body: fetched.text, fetchedAt: new Date(), contentHash: hash, approval: "draft", fetchNote: `Source changed; re-imported ${stamp(by)}. Needs re-approval.` })
     .where(eq(s.documents.id, id));
   await writeChunks(db, id, lgaId, doc.visibility, fetched.text);
+  forget();
   revalidatePath(`/${lgaId}/documents`);
   redirect(`/admin/${lgaId}/documents?edit=${id}&ok=changed#form`);
 }
@@ -513,6 +522,7 @@ export async function importAllocations(fd: FormData) {
     imported += 1;
   }
   const msg = `Imported ${imported} row${imported === 1 ? "" : "s"}.${unmatched.length ? ` Unmatched (${unmatched.length}): ${unmatched.slice(0, 12).join("; ")}${unmatched.length > 12 ? " …" : ""}.` : ""}${bad.length ? ` Bad period or amount (${bad.length}): ${bad.slice(0, 8).join("; ")}.` : ""}`;
+  forget();
   revalidatePath("/");
   redirect(`/admin/allocations?ok=${encodeURIComponent(msg)}`);
 }
