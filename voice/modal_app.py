@@ -12,6 +12,16 @@ POST /transcribe?lang=ha   body: the recorded audio (webm/ogg/mp4/wav, up to 60 
                            header: X-ASR-Key: <ASR_KEY>
 -> {"text": "...", "lang": "ha", "model": "NCAIR1/Hausa-ASR", "seconds": 4.2, "ms": 2310}
 
+Text to speech for spoken answers, with Meta's open MMS-TTS voices (VITS, one per language,
+CC BY-NC 4.0; AskLGA is non-commercial). Igbo uses a community checkpoint derived from the MMS
+Igbo model, as Meta's own is no longer published:
+
+  en  -> facebook/mms-tts-eng     pcm -> facebook/mms-tts-pcm     ha -> facebook/mms-tts-hau
+  yo  -> facebook/mms-tts-yor     ig  -> Shinzmann/soro-tts-ibo
+
+POST /speak   body: {"text": "...", "lang": "ha"}   header: X-ASR-Key: <ASR_KEY>
+-> audio/wav, 16 kHz mono 16-bit; headers X-Voice-Model, X-Sample-Rate
+
 The weights are baked into the image at build time and the loaded models are captured in a
 memory snapshot, so a cold start restores them instead of reloading. The container scales to
 zero after two idle minutes (sized for the $1 free Modal credit). Audio is decoded in memory and never written to disk or logged.
@@ -32,11 +42,22 @@ MODELS = {
     "yo": "NCAIR1/Yoruba-ASR",
     "ig": "NCAIR1/Igbo-ASR",
 }
+VOICES = {
+    "en": "facebook/mms-tts-eng",
+    "pcm": "facebook/mms-tts-pcm",
+    "ha": "facebook/mms-tts-hau",
+    "yo": "facebook/mms-tts-yor",
+    "ig": "Shinzmann/soro-tts-ibo",
+}
 MAX_BYTES = 3 * 1024 * 1024
 MAX_SECONDS = 60
+MAX_SPEECH_CHARS = 700
 RATE = 16000
 # Training artefacts in the model repos that inference never reads (the optimizer alone is 1.9 GB).
+# The N-ATLAS weights are pytorch_model.bin files, so "*.bin" must never be in this list.
 SKIP = ["optimizer.pt", "rng_state*", "scheduler.pt", "training_args.bin", "trainer_state.json"]
+# The MMS voices ship safetensors as well as a duplicate .bin, plus a demo recording.
+SKIP_VOICE = ["pytorch_model.bin", "*.wav"]
 
 
 def download_weights():
@@ -44,6 +65,8 @@ def download_weights():
 
     for m in dict.fromkeys(MODELS.values()):
         snapshot_download(m, token=os.environ["HF_TOKEN"], ignore_patterns=SKIP)
+    for m in dict.fromkeys(VOICES.values()):
+        snapshot_download(m, token=os.environ["HF_TOKEN"], ignore_patterns=SKIP_VOICE)
 
 
 image = (
@@ -60,7 +83,7 @@ app = modal.App("asklga-voice", image=image)
 
 @app.cls(
     cpu=2,
-    memory=4096,
+    memory=6144,
     timeout=120,
     scaledown_window=120,
     enable_memory_snapshot=True,
@@ -72,10 +95,15 @@ class Voice:
     def load(self):
         import threading
 
-        from transformers import pipeline
+        from transformers import VitsModel, VitsTokenizer, pipeline
 
         self.pipes = {m: pipeline("automatic-speech-recognition", model=m, device="cpu") for m in dict.fromkeys(MODELS.values())}
         self.locks = {m: threading.Lock() for m in self.pipes}
+        self.voices = {}
+        for m in dict.fromkeys(VOICES.values()):
+            model = VitsModel.from_pretrained(m).eval()
+            self.voices[m] = (VitsTokenizer.from_pretrained(m), model)
+            self.locks[m] = threading.Lock()
 
     @modal.enter(snap=False)
     def threads(self):
@@ -104,11 +132,65 @@ class Voice:
         @api.get("/")
         def index():
             return {
-                "service": "AskLGA voice: speech to text with N-ATLAS (NCAIR1) ASR models",
+                "service": "AskLGA voice: speech to text with N-ATLAS (NCAIR1) ASR models; text to speech with MMS-TTS (Meta) voices",
                 "languages": MODELS,
-                "usage": "POST /transcribe?lang=en|pcm|ha|yo|ig with the audio as the body and an X-ASR-Key header",
+                "voices": VOICES,
+                "usage": "POST /transcribe?lang=en|pcm|ha|yo|ig with the audio as the body; POST /speak with {text, lang}; both need an X-ASR-Key header",
                 "source": "https://github.com/Uthmannabeel/asklga/tree/main/voice",
             }
+
+        def wav16(samples) -> bytes:
+            """float32 [-1, 1] -> 16-bit mono WAV at RATE."""
+            import io
+            import wave
+
+            pcm = (np.clip(samples, -1.0, 1.0) * 32767).astype("<i2").tobytes()
+            buf = io.BytesIO()
+            with wave.open(buf, "wb") as w:
+                w.setnchannels(1)
+                w.setsampwidth(2)
+                w.setframerate(RATE)
+                w.writeframes(pcm)
+            return buf.getvalue()
+
+        @api.post("/speak")
+        async def speak(request: Request):
+            from fastapi import Response
+
+            if not key or request.headers.get("x-asr-key") != key:
+                raise HTTPException(status_code=401, detail="Missing or wrong key.")
+            body = await request.json()
+            text = str(body.get("text", "")).strip()[:MAX_SPEECH_CHARS]
+            lang = str(body.get("lang", "en"))
+            model_id = VOICES.get(lang)
+            if not model_id:
+                raise HTTPException(status_code=400, detail=f"lang must be one of {sorted(VOICES)}")
+            if not text:
+                raise HTTPException(status_code=400, detail="Send text to speak.")
+            started = time.time()
+            from starlette.concurrency import run_in_threadpool
+
+            def run():
+                import torch
+
+                tok, model = self.voices[model_id]
+                inputs = tok(text, return_tensors="pt")
+                with self.locks[model_id], torch.no_grad():
+                    torch.manual_seed(7)  # the flow is stochastic; a fixed seed keeps the voice steady
+                    wave = model(**inputs).waveform[0].numpy()
+                # Resample if a checkpoint is not at 16 kHz (MMS voices are).
+                sr = int(getattr(model.config, "sampling_rate", RATE))
+                if sr != RATE:
+                    idx = np.linspace(0, len(wave) - 1, int(len(wave) * RATE / sr))
+                    wave = np.interp(idx, np.arange(len(wave)), wave).astype("float32")
+                return wav16(wave)
+
+            data = await run_in_threadpool(run)
+            return Response(
+                content=data,
+                media_type="audio/wav",
+                headers={"X-Voice-Model": model_id, "X-Sample-Rate": str(RATE), "X-Voice-Ms": str(int((time.time() - started) * 1000))},
+            )
 
         @api.post("/transcribe")
         async def transcribe_raw(request: Request, lang: str = "en"):
