@@ -265,7 +265,7 @@ export { sanitizeHistory, MAX_HISTORY, type Turn } from "./history";
 
 /** Added to the system prompt when the answer will be read aloud. */
 const SPOKEN_RULES = `
-This answer will be read aloud by a voice, so write for the ear: two to four short spoken sentences, under 70 words, no lists, no headings, no record IDs, no abbreviations, no symbols. Say amounts in words a person would say ("two hundred million naira"), but keep every figure exactly as the record states it.`;
+This answer will be read aloud by a voice, so write for the ear: two to four short spoken sentences, under 70 words, no lists, no headings, no record IDs, no abbreviations, no symbols. Write every figure in digits exactly as the record states it (the voice reads digits well), with "naira" written out after an amount instead of a symbol.`;
 
 export type AskInput = {
   lgaId: string;

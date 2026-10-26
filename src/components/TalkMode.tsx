@@ -485,7 +485,7 @@ export function TalkMode({ lgaId, lgaName, lang: initialLang, t, suggestions = [
               {e.role === "council" ? (
                 e.result.answered && e.result.citations.length ? (
                   <div className="stamp stamp-in">
-                    <div><strong>{t.fromRecords.replace("%n", String(e.result.citations.length))}</strong></div>
+                    <div><strong>{e.result.citations.length === 1 ? t.fromOne : t.fromRecords.replace("%n", String(e.result.citations.length))}</strong></div>
                     <ul className="grid gap-0.5">
                       {e.result.citations.map((c) => (
                         <li key={c.id}><Link href={recordPath(lgaId, c)}>{c.id}</Link> {c.label}</li>
