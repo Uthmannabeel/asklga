@@ -4,6 +4,7 @@ import { z } from "zod";
 import { and, eq, sql } from "drizzle-orm";
 import { getDb, schema as s } from "@/db";
 import { scrubPii } from "./pii";
+import { MAX_HISTORY as HISTORY_LIMIT, type Turn } from "./history";
 import { buildRegister } from "./register";
 import { searchChunks, type Scope } from "./queries";
 
@@ -260,11 +261,21 @@ async function generateWithGemini(system: string, register: string, user: string
   return check.data;
 }
 
+export { sanitizeHistory, MAX_HISTORY, type Turn } from "./history";
+
+/** Added to the system prompt when the answer will be read aloud. */
+const SPOKEN_RULES = `
+This answer will be read aloud by a voice, so write for the ear: two to four short spoken sentences, under 70 words, no lists, no headings, no record IDs, no abbreviations, no symbols. Say amounts in words a person would say ("two hundred million naira"), but keep every figure exactly as the record states it.`;
+
 export type AskInput = {
   lgaId: string;
   question: string;
   scope?: Scope;
   audience?: "resident" | "investor" | "staff";
+  /** Earlier turns of this conversation, most recent last. Context only; the records still decide. */
+  history?: Turn[];
+  /** The answer will be spoken: shorter, spoken-style sentences. */
+  spoken?: boolean;
 };
 
 export type AskResult = {
@@ -329,7 +340,13 @@ export async function ask(input: AskInput): Promise<AskResult> {
     : "(no document passages matched this question)";
 
   const registerBlock = `# APPROVED RECORDS FOR THIS LGA (scope: ${scope})\n\n${register.text}`;
-  const userBlock = `Audience: ${audience}.\n\nRelevant document passages:\n${passageBlock}\n\nQuestion:\n${question}`;
+  // Earlier turns let "and the one in Rumuodara?" resolve; they are context, never a source.
+  const history = (input.history ?? []).slice(-HISTORY_LIMIT);
+  const historyBlock = history.length
+    ? `Earlier in this conversation (context only; answer from the records, and if a follow-up needs a record that is not here, say so):\n${history.map((t) => `Person: ${t.question}\nYou: ${t.answer}`).join("\n")}\n\n`
+    : "";
+  const userBlock = `Audience: ${audience}.\n\n${historyBlock}Relevant document passages:\n${passageBlock}\n\nQuestion:\n${question}`;
+  const system = input.spoken ? SYSTEM + SPOKEN_RULES : SYSTEM;
   const searchOnly = scope === "internal" && INTERNAL_MODE === "search";
   // An LGA with nothing approved yet gets no model call: the question is logged as a gap so the
   // LGA (and the national demand signal) can see it, and no quota is spent on a certain refusal.
@@ -341,8 +358,8 @@ export async function ask(input: AskInput): Promise<AskResult> {
       : searchOnly
       ? searchOnlyAnswer(passages)
       : PROVIDER === "gemini"
-        ? await generateWithGemini(SYSTEM, registerBlock, userBlock)
-        : await generateWithAnthropic(SYSTEM, registerBlock, userBlock);
+        ? await generateWithGemini(system, registerBlock, userBlock)
+        : await generateWithAnthropic(system, registerBlock, userBlock);
 
   // Post-check 1: citations must be real, approved records.
   // The record type comes from the register, not the model, so links always resolve.

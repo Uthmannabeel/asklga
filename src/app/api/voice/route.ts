@@ -19,6 +19,29 @@ const MAX_BYTES = 3 * 1024 * 1024;
 const PER_IP_PER_MIN = Number(process.env.VOICE_RATE_PER_MIN ?? 6);
 const PER_IP_PER_DAY = Number(process.env.VOICE_RATE_PER_DAY ?? 60);
 
+/**
+ * GET /api/voice wakes the voice service. The service scales to zero when idle and restores
+ * its models from a snapshot on the first call, so the talk page pings this as it opens and
+ * the first spoken question is not the one that pays for the cold start. No key is sent and
+ * no audio: the reply only says whether the service is reachable.
+ */
+export async function GET(req: Request) {
+  const base = process.env.ASR_URL?.replace(/\/+$/, "");
+  if (!base) return NextResponse.json({ ok: false, voice: false }, { status: 200 });
+  if (!allow(`voice-warm:${clientIp(req)}`, 4, 60_000)) return TOO_MANY();
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), 20_000);
+  const started = Date.now();
+  try {
+    const res = await fetch(`${base}/`, { signal: c.signal, cache: "no-store" });
+    return NextResponse.json({ ok: res.ok, voice: true, ms: Date.now() - started }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ ok: false, voice: true, ms: Date.now() - started }, { headers: { "Cache-Control": "no-store" } });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export async function POST(req: Request) {
   const base = process.env.ASR_URL?.replace(/\/+$/, "");
   const key = process.env.ASR_KEY;

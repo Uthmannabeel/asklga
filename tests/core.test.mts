@@ -92,3 +92,41 @@ test("Client address: X-Forwarded-For is ignored unless a proxy is trusted", () 
     if (prev.h === undefined) delete process.env.TRUST_PROXY_HOPS; else process.env.TRUST_PROXY_HOPS = prev.h;
   }
 });
+
+import { sanitizeHistory } from "../src/lib/history.ts";
+import { rateFromMime, speakable, wavFromPcm16 } from "../src/lib/tts.ts";
+
+test("history: only the last three well-formed turns survive, capped and scrubbed", () => {
+  const raw = [
+    { question: "q0", answer: "a0" },
+    { question: "q1", answer: "a1" },
+    { question: "  ", answer: "no question" },
+    "junk",
+    { question: "q2", answer: "" },
+    { question: "My name is Chidi Okoro, call 08031234567", answer: "x".repeat(2000) },
+    { question: "q4", answer: "a4" },
+  ];
+  const out = sanitizeHistory(raw);
+  assert.equal(out.length, 2, JSON.stringify(out));
+  assert.ok(!out[0].question.includes("Okoro") && !out[0].question.includes("0803"));
+  assert.equal(out[0].answer.length, 1000);
+  assert.equal(out[1].question, "q4");
+  assert.deepEqual(sanitizeHistory("nope"), []);
+  assert.deepEqual(sanitizeHistory(undefined), []);
+});
+
+test("speech: WAV header is right and record IDs never reach the voice", () => {
+  const pcm = new Uint8Array(32000); // one second at 16 kHz, 16-bit mono
+  const wav = wavFromPcm16(pcm, 16000);
+  assert.equal(wav.byteLength, 44 + 32000);
+  const v = new DataView(wav.buffer);
+  assert.equal(String.fromCharCode(...wav.subarray(0, 4)), "RIFF");
+  assert.equal(String.fromCharCode(...wav.subarray(8, 12)), "WAVE");
+  assert.equal(v.getUint32(24, true), 16000);
+  assert.equal(v.getUint32(28, true), 32000);
+  assert.equal(v.getUint16(34, true), 16);
+  assert.equal(v.getUint32(40, true), 32000);
+  assert.equal(rateFromMime("audio/L16;codec=pcm;rate=24000"), 24000);
+  assert.equal(rateFromMime("audio/L16"), 24000);
+  assert.equal(speakable("The road [OBA-P-0003] is ongoing. See OBA-D-0002 **now**"), "The road is ongoing. See now");
+});

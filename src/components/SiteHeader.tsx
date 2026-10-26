@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LANG_NAMES, REVIEWED, UI_LANGS, dict, uiLang, type UiLang } from "@/lib/i18n";
+import { talkDict } from "@/lib/talkStrings";
 import { Mark } from "./Wordmark";
 import { NavLinks } from "./NavLinks";
 
@@ -78,6 +79,7 @@ export async function SiteHeader({ lga, demo, compiled, back }: { lga?: { id: st
               label="Sections"
               items={[
                 { href: `/${lga.id}`, label: t.nav.ask, exact: true },
+                { href: `/${lga.id}/talk`, label: talkDict(lang).tab },
                 { href: `/${lga.id}/services`, label: t.nav.services },
                 { href: `/${lga.id}/projects`, label: t.nav.projects },
                 { href: `/${lga.id}/assets`, label: t.nav.assets },

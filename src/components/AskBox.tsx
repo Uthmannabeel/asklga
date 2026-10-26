@@ -73,6 +73,7 @@ export function AskBox({
   t,
   lang = "en",
   suggestions = [],
+  talkHref,
 }: {
   lgaId: string;
   audience?: "resident" | "investor" | "staff";
@@ -82,6 +83,8 @@ export function AskBox({
   lang?: UiLang;
   /** Example questions this council's records can answer; tapping one asks it. */
   suggestions?: string[];
+  /** Where the hands-free conversation lives; shown as a quiet link beside the voice button. */
+  talkHref?: string;
 }) {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -400,7 +403,12 @@ export function AskBox({
             </>
           ) : null}
         </div>
-        {speechSupported ? <p className="small muted">{t.voiceBy}{note ? <span lang="en"> {note}</span> : null}</p> : null}
+        {speechSupported ? (
+          <p className="small muted">
+            {t.voiceBy}{note ? <span lang="en"> {note}</span> : null}
+            {talkHref ? <> <Link href={talkHref} className="font-bold">{t.talkHandsFree}</Link></> : null}
+          </p>
+        ) : null}
       </form>
 
       <div aria-live="polite" className="grid gap-4">

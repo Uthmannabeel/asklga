@@ -1,10 +1,19 @@
 {
+  "id": "/",
   "name": "AskLGA",
   "short_name": "AskLGA",
-  "description": "Ask your local government and get the official answer with its source.",
+  "lang": "en-NG",
+  "description": "Ask your local government, by voice or text, and get the official answer with its source.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#1e6b3c",
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+  "theme_color": "#0c2a1c",
+  "categories": ["government", "utilities", "reference"],
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }],
+  "shortcuts": [
+    { "name": "Talk to your council", "url": "/talk", "description": "Hands-free conversation with your local government" },
+    { "name": "Money", "url": "/money", "description": "Federation allocations to every council" }
+  ]
 }

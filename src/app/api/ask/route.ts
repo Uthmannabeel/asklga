@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ask, AnswerServiceOffline, AnswerServiceBusy } from "@/lib/ask";
+import { ask, AnswerServiceOffline, AnswerServiceBusy, sanitizeHistory } from "@/lib/ask";
 import { getLga } from "@/lib/queries";
 import { isStaff, questionToken } from "@/lib/auth";
 import { allow, allowDaily, clientIp, readJson, TOO_MANY } from "@/lib/ratelimit";
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const staff = await isStaff();
   if (!staff && (!allow(`ask:${ip}`, PER_IP_PER_MIN, 60_000) || !allowDaily(`ask-day:${ip}`, PER_IP_PER_DAY))) return TOO_MANY();
 
-  const body = await readJson<{ lgaId?: unknown; question?: unknown; scope?: unknown; audience?: unknown }>(req, 8 * 1024);
+  const body = await readJson<{ lgaId?: unknown; question?: unknown; scope?: unknown; audience?: unknown; history?: unknown; spoken?: unknown }>(req, 16 * 1024);
   if (!body) return NextResponse.json({ error: "Send JSON with lgaId and question." }, { status: 400 });
   const lgaId = typeof body.lgaId === "string" ? body.lgaId.slice(0, 60) : "";
   const question = typeof body.question === "string" ? body.question.trim() : "";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   const audience = staff && wantsInternal ? "staff" : body.audience === "investor" ? "investor" : "resident";
 
   try {
-    const result = await ask({ lgaId, question, scope, audience });
+    const result = await ask({ lgaId, question, scope, audience, history: sanitizeHistory(body.history), spoken: body.spoken === true });
     return NextResponse.json({ ...result, token: questionToken(result.questionId) });
   } catch (e) {
     if (e instanceof AnswerServiceOffline) {

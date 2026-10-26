@@ -61,9 +61,12 @@ export default async function Home() {
               </p>
               <div className="hero-voice">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                <p>
-                  <strong>Or say it out loud.</strong> Speech in Hausa, Yoruba, Igbo and Nigerian English is transcribed by N-ATLAS, NCAIR&apos;s open speech models. <Link href={`/${demoId}`}>Try it with {demo?.name ?? "Obio/Akpor"}</Link>
-                </p>
+                <div className="grid gap-3 justify-items-start">
+                  <p>
+                    <strong>Or just talk.</strong> Press once, ask in Hausa, Yoruba, Igbo, Pidgin or English, and hear the answer read back from the council&apos;s records. Cut in whenever you like.
+                  </p>
+                  <Link href={`/${demoId}/talk`} className="btn btn-on-band">Talk to {demo?.name ?? "Obio/Akpor"}</Link>
+                </div>
               </div>
             </div>
             <AnswerSpecimen />

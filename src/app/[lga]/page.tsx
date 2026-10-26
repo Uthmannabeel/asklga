@@ -86,7 +86,7 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
           <h1>{row.name}</h1>
         </div>
         <div className="lt-ask panel">
-          <AskBox lgaId={lga} t={t} lang={lang} suggestions={suggestions} />
+          <AskBox lgaId={lga} t={t} lang={lang} suggestions={suggestions} talkHref={`/${lga}/talk`} />
         </div>
         <div className="lt-about grid gap-4 content-start">{about}</div>
       </div>

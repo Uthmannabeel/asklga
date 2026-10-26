@@ -63,6 +63,16 @@ export default function About() {
             </div>
           </section>
 
+          <section id="independence" className="grid gap-8 lg:grid-cols-[1fr_1.6fr] lg:gap-16" style={{ scrollMarginTop: "1rem" }}>
+            <div className="grid gap-2 content-start">
+              <h2>Independent of any party or office</h2>
+            </div>
+            <div className="grid gap-3" style={{ color: "var(--ink-2)" }}>
+              <p>AskLGA belongs to no party, movement, candidate or government office, and takes no money from any. It does not publish or praise achievements. It answers from a council&apos;s own published records, cites the record, and says so when there is none.</p>
+              <p>The same rules apply when you speak to it. The voice reads the written answer and nothing more; the text and its sources are always on screen, and its accuracy is tested in public on the <Link href="/scoreboard">scoreboard</Link>. Speech recognition uses N-ATLAS, the open Nigerian speech models from NCAIR; what you say is transcribed once and not stored.</p>
+            </div>
+          </section>
+
           <section id="sources" className="grid gap-4" style={{ scrollMarginTop: "1rem" }}>
             <h2>Data sources and licences</h2>
             <p className="measure" style={{ color: "var(--ink-2)" }}>Every figure on the national layer comes from one of these. Council records carry their own source on each record.</p>
