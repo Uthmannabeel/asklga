@@ -12,6 +12,8 @@ const SETS = [
   ["services", "Service directory", "Eligibility, documents, steps, office and turnaround for each service."],
   ["investment", "Investment profile", "Each approved section of the investor profile."],
   ["allocations", "Federation allocations", "Every published FAAC month: gross, deductions and net, with source."],
+  ["officials", "Officials", "Who holds which office, since when, with the source for each name."],
+  ["issues", "Problems reported", "Every public resident report with its status, the council's response and the dates."],
 ];
 
 export default async function OpenDataPage({ params }: { params: Promise<{ lga: string }> }) {

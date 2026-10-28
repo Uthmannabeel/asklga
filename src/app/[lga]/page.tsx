@@ -14,8 +14,15 @@ import { lgaFacts } from "@/lib/facts";
 import { codeForState } from "@/lib/geo";
 import { stateLabel, stateSlug } from "@/lib/ngTiles";
 import { SITE_URL } from "@/lib/site";
+import { issueStats, listOfficials, reportCard } from "@/lib/participation";
+import { MIN_RATERS } from "@/lib/participationRules";
+import { ROLE_LABEL } from "@/lib/officials";
 
 export const dynamic = "force-dynamic";
+
+const Arrow = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" className="task-arrow"><path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+);
 
 export async function generateMetadata({ params }: { params: Promise<{ lga: string }> }) {
   const { lga } = await params;
@@ -29,8 +36,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lga: stri
 
 export default async function LgaHome({ params }: { params: Promise<{ lga: string }> }) {
   const { lga } = await params;
-  const [row, projects, services, lang, records, money, dir, assets, docs] = await Promise.all([getLga(lga), listProjects(lga), listServices(lga), uiLang(), lgaRecordCount(lga), ledger(lga), directory(), listAssets(lga), listDocuments(lga, "public")]);
+  const [row, projects, services, lang, records, money, dir, assets, docs, officials, issues, card] = await Promise.all([getLga(lga), listProjects(lga), listServices(lga), uiLang(), lgaRecordCount(lga), ledger(lga), directory(), listAssets(lga), listDocuments(lga, "public"), listOfficials(lga), issueStats(lga), reportCard(lga)]);
   if (!row) notFound();
+  const leadership = officials.filter((o) => !o.until && o.role !== "councillor").slice(0, 4);
   const t = dict(lang);
   const active = projects.filter((p) => p.status === "ongoing" || p.status === "stalled").slice(0, 5);
   const joined = records > 0;
@@ -66,6 +74,23 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
           ))}
         </dl>
       ) : null}
+      {leadership.length ? (
+        <div className="grid gap-2" lang="en">
+          <p className="eyebrow">Who runs the council</p>
+          <ul className="officials">
+            {leadership.map((o) => (
+              <li key={o.id}>
+                <span className="font-bold">{o.title ? `${o.title} ` : ""}{o.name}</span>
+                <span className="role">{ROLE_LABEL[o.role]}{o.since ? `, since ${formatDate(o.since)}` : ""}{o.sourceUrl ? <>. <a href={o.sourceUrl} rel="noopener" style={{ color: "inherit" }}>Source</a></> : ""}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <nav className="quick-actions" aria-label="Take part" lang="en">
+        <Link href={`/${lga}/issues#file`}><span><strong>Report a problem</strong><span className="small muted block">Public at once. The council&apos;s response is timed.</span></span><Arrow /></Link>
+        <Link href={`/${lga}/report-card#score`}><span><strong>Score the council</strong><span className="small muted block">Nine constitutional functions, 1 to 5.</span></span><Arrow /></Link>
+      </nav>
     </>
   );
 
@@ -139,6 +164,25 @@ export default async function LgaHome({ params }: { params: Promise<{ lga: strin
               </p>
             </div>
           )}
+          <div className="grid gap-2" style={{ borderTop: "1px solid var(--rule)", paddingTop: "1.25rem" }}>
+            <p className="eyebrow">Council response</p>
+            {issues.total ? (
+              <p>
+                <Link href={`/${lga}/issues`} className="font-bold">{issues.total} problem{issues.total === 1 ? "" : "s"} reported</Link>
+                <span className="small block" style={{ color: "var(--ink-2)" }}>
+                  Council responded to {issues.responded} of {issues.total}{issues.medianDaysToResponse != null ? `, median ${issues.medianDaysToResponse} day${issues.medianDaysToResponse === 1 ? "" : "s"}` : ""}. {issues.resolved} resolved{issues.overdue ? `, ${issues.overdue} waiting over 14 days` : ""}.
+                </span>
+              </p>
+            ) : (
+              <p className="small" style={{ color: "var(--ink-2)" }}>No problem has been reported to {row.name} here yet. <Link href={`/${lga}/issues#file`}>File the first</Link>.</p>
+            )}
+            <p>
+              <Link href={`/${lga}/report-card`} className="font-bold">Residents&apos; report card</Link>
+              <span className="small block" style={{ color: "var(--ink-2)" }}>
+                {card.published && card.overall != null ? `${card.overall.toFixed(1)} of 5 from ${card.raters} residents in three months.` : `${card.raters} of ${MIN_RATERS} residents needed before a score is published.`}
+              </span>
+            </p>
+          </div>
           <div className="grid gap-2" style={{ borderTop: "1px solid var(--rule)", paddingTop: "1.25rem" }}>
             <p className="font-bold">{t.home.investingHere}</p>
             <p className="small" style={{ color: "var(--ink-2)" }}>{t.home.investingBlurb}</p>

@@ -255,6 +255,80 @@ export const tickets = pgTable("tickets", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export type IssueStatus = "received" | "acknowledged" | "in_progress" | "resolved" | "not_council" | "closed";
+
+/**
+ * A problem a resident reported against one of the council's constitutional functions.
+ * Public from the moment it is filed (after PII scrubbing), with every status change on a
+ * public timeline, so residents can see how long the council takes to respond.
+ */
+export const issues = pgTable("issues", {
+  id: text("id").primaryKey(), // e.g. OBA-R-0001
+  lgaId: text("lga_id").notNull().references(() => lgas.id),
+  fn: text("fn").notNull(), // FnKey from src/lib/functions.ts
+  title: text("title").notNull(),
+  detail: text("detail").notNull(), // PII-scrubbed
+  ward: text("ward"),
+  place: text("place"), // landmark or street, PII-scrubbed
+  photoUrl: text("photo_url"),
+  status: text("status").$type<IssueStatus>().notNull().default("received"),
+  response: text("response"), // the council's latest public response
+  respondedAt: timestamp("responded_at", { withTimezone: true }), // first staff response
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  hidden: boolean("hidden").notNull().default(false), // taken off the public register by staff
+  hideReason: text("hide_reason"),
+  supports: integer("supports").notNull().default(0), // residents who said "this affects me too"
+  ipHash: text("ip_hash"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const issueUpdates = pgTable("issue_updates", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  issueId: text("issue_id").notNull().references(() => issues.id, { onDelete: "cascade" }),
+  oldStatus: text("old_status"),
+  newStatus: text("new_status").notNull(),
+  note: text("note"),
+  by: text("by").notNull(), // "Resident" or the officer's name
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * A resident's monthly score of the council on the nine constitutional functions, 1 to 5 each,
+ * any subset. One per email address per council per month; the address is stored only as a
+ * keyed hash. Scores are published only once enough residents have rated (see participation.ts).
+ */
+export const ratings = pgTable("ratings", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  lgaId: text("lga_id").notNull().references(() => lgas.id),
+  month: text("month").notNull(), // YYYY-MM
+  emailHash: text("email_hash").notNull(),
+  scores: jsonb("scores").$type<Partial<Record<string, number>>>().notNull(),
+  comment: text("comment"), // PII-scrubbed, staff only
+  ipHash: text("ip_hash"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type OfficialRole = "chairman" | "vice_chairman" | "leader" | "secretary" | "hlga" | "treasurer" | "councillor" | "other";
+
+/** Who holds office at the council, with the source each name was taken from. */
+export const officials = pgTable("officials", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  lgaId: text("lga_id").notNull().references(() => lgas.id),
+  role: text("role").$type<OfficialRole>().notNull(),
+  name: text("name").notNull(),
+  title: text("title"), // as styled locally, e.g. "Executive Chairman"
+  ward: text("ward"), // councillors
+  since: text("since"), // ISO date
+  until: text("until"),
+  ord: integer("ord").notNull().default(0),
+  source: text("source").notNull(),
+  sourceUrl: text("source_url"),
+  approval: text("approval").notNull().default("draft"),
+  lastVerified: text("last_verified"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const investorEnquiries = pgTable("investor_enquiries", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   lgaId: text("lga_id").notNull(),

@@ -593,6 +593,91 @@ export async function updateTicket(fd: FormData) {
   redirect(`/admin/${lgaId}/tickets`);
 }
 
+/* ---------- Problem reports ---------- */
+
+const ISSUE_STATUS = ["received", "acknowledged", "in_progress", "resolved", "not_council", "closed"] as const;
+const OFFICIAL_ROLE = ["chairman", "vice_chairman", "leader", "secretary", "hlga", "treasurer", "councillor", "other"] as const;
+
+/** Changes a report's status and/or public response. Every change goes on the public timeline with the officer's name. */
+export async function respondToIssue(fd: FormData) {
+  const lgaId = str(fd, "lgaId", 60)!;
+  const { name: by } = await requireStaff(lgaId, "editor");
+  const db = await getDb();
+  const id = str(fd, "id", 40)!;
+  const [issue] = await db.select().from(s.issues).where(eq(s.issues.id, id)).limit(1);
+  await ownedBy(issue, lgaId);
+  const status = oneOf(fd, "status", ISSUE_STATUS, issue.status as (typeof ISSUE_STATUS)[number]);
+  const note = str(fd, "note", 1500);
+  if (status === issue.status && !note) redirect(`/admin/${lgaId}/issues`);
+  const now = new Date();
+  await db
+    .update(s.issues)
+    .set({
+      status,
+      response: note ?? issue.response,
+      respondedAt: issue.respondedAt ?? now,
+      resolvedAt: status === "resolved" ? (issue.resolvedAt ?? now) : status === "received" || status === "acknowledged" || status === "in_progress" ? null : issue.resolvedAt,
+      updatedAt: now,
+    })
+    .where(eq(s.issues.id, id));
+  await db.insert(s.issueUpdates).values({ issueId: id, oldStatus: issue.status, newStatus: status, note, by });
+  forget("issues:");
+  revalidatePath(`/${lgaId}/issues`);
+  redirect(`/admin/${lgaId}/issues`);
+}
+
+/** Takes a report off the public register (abuse, personal attack, duplicate) or restores it. The reason is kept. */
+export async function hideIssue(fd: FormData) {
+  const lgaId = str(fd, "lgaId", 60)!;
+  const { name: by } = await requireStaff(lgaId, "editor");
+  const db = await getDb();
+  const id = str(fd, "id", 40)!;
+  const [issue] = await db.select({ lgaId: s.issues.lgaId, hidden: s.issues.hidden }).from(s.issues).where(eq(s.issues.id, id)).limit(1);
+  await ownedBy(issue, lgaId);
+  const hide = str(fd, "hidden", 5) === "yes";
+  const reason = str(fd, "reason", 300);
+  if (hide && !reason) redirect(`/admin/${lgaId}/issues?error=${encodeURIComponent("Give a reason for taking a report off the register.")}`);
+  await db.update(s.issues).set({ hidden: hide, hideReason: hide ? `${reason} (${stamp(by)})` : null, updatedAt: new Date() }).where(eq(s.issues.id, id));
+  forget("issues:");
+  revalidatePath(`/${lgaId}/issues`);
+  redirect(`/admin/${lgaId}/issues`);
+}
+
+/* ---------- Officials ---------- */
+
+export async function saveOfficial(fd: FormData) {
+  const lgaId = str(fd, "lgaId", 60)!;
+  await requireStaff(lgaId, "editor");
+  const db = await getDb();
+  const idRaw = str(fd, "id", 20);
+  const values = {
+    lgaId,
+    role: oneOf(fd, "role", OFFICIAL_ROLE, "other"),
+    name: str(fd, "name", 160) ?? "Unnamed",
+    title: str(fd, "title", 120),
+    ward: str(fd, "ward", 80),
+    since: str(fd, "since", 20),
+    until: str(fd, "until", 20),
+    ord: num(fd, "ord") ?? 0,
+    source: str(fd, "source", 300) ?? "Entered by LGA staff",
+    sourceUrl: safeUrl(fd.get("sourceUrl")),
+    approval: str(fd, "approval", 20) === "approved" ? "approved" : "draft",
+    lastVerified: str(fd, "lastVerified", 20),
+    updatedAt: new Date(),
+  };
+  if (idRaw) {
+    const id = Number(idRaw);
+    if (!Number.isSafeInteger(id)) redirect(`/admin/${lgaId}/officials`);
+    await ownedBy((await db.select({ lgaId: s.officials.lgaId }).from(s.officials).where(eq(s.officials.id, id)).limit(1))[0], lgaId);
+    await db.update(s.officials).set(values).where(eq(s.officials.id, id));
+  } else {
+    await db.insert(s.officials).values(values);
+  }
+  forget("officials:");
+  revalidatePath(`/${lgaId}`);
+  redirect(`/admin/${lgaId}/officials`);
+}
+
 export async function updateEnquiry(fd: FormData) {
   const lgaId = str(fd, "lgaId", 60)!;
   await requireStaff(lgaId, "editor");

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getLga, listAssets, listProfile, listProjects, listServices } from "@/lib/queries";
 import { allocationsFor } from "@/lib/national";
+import { listIssues, listOfficials } from "@/lib/participation";
 
 /**
  * Open data. GET /api/{lga}/open/projects.json | projects.csv | assets.json | assets.csv |
@@ -27,6 +28,8 @@ const COLUMNS: Record<string, string[]> = {
   services: ["id", "lgaId", "name", "category", "summary", "eligibility", "documents", "steps", "office", "role", "contact", "turnaround", "lastVerified", "source", "sourceUrl", "updatedAt"],
   investment: ["id", "lgaId", "section", "title", "body", "lastVerified", "source", "sourceUrl", "updatedAt"],
   allocations: ["lgaId", "period", "grossNgn", "deductionsNgn", "netNgn", "source", "sourceUrl"],
+  issues: ["id", "lgaId", "fn", "title", "detail", "ward", "place", "status", "response", "supports", "createdAt", "respondedAt", "resolvedAt"],
+  officials: ["lgaId", "role", "name", "title", "ward", "since", "until", "lastVerified", "source", "sourceUrl"],
 };
 
 /** Drops the internal approval flag; every row served here is approved by definition. */
@@ -60,6 +63,13 @@ export async function GET(_req: Request, ctx: { params: Promise<{ lga: string; f
       break;
     case "allocations":
       rows = (await allocationsFor(lga, 1000)).map((r) => ({ lgaId: r.lgaId, period: r.period, grossNgn: r.grossNgn, deductionsNgn: r.deductionsNgn, netNgn: r.netNgn, source: r.source, sourceUrl: r.sourceUrl }));
+      break;
+    case "issues":
+      // Public reports only, without the photo link (a third-party site) or any hash.
+      rows = (await listIssues(lga, { limit: 5000 })).map((r) => ({ id: r.id, lgaId: r.lgaId, fn: r.fn, title: r.title, detail: r.detail, ward: r.ward, place: r.place, status: r.status, response: r.response, supports: r.supports, createdAt: r.createdAt, respondedAt: r.respondedAt, resolvedAt: r.resolvedAt }));
+      break;
+    case "officials":
+      rows = (await listOfficials(lga)).map((r) => ({ lgaId: r.lgaId, role: r.role, name: r.name, title: r.title, ward: r.ward, since: r.since, until: r.until, lastVerified: r.lastVerified, source: r.source, sourceUrl: r.sourceUrl }));
       break;
     default:
       return NextResponse.json({ error: "Unknown dataset" }, { status: 404 });

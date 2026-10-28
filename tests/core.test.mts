@@ -130,3 +130,66 @@ test("speech: WAV header is right and record IDs never reach the voice", () => {
   assert.equal(rateFromMime("audio/L16"), 24000);
   assert.equal(speakable("The road [OBA-P-0003] is ongoing. See OBA-D-0002 **now**"), "The road is ongoing. See now");
 });
+
+/* ---------- Resident participation rules ---------- */
+import { validateIssue, validateRating, summariseRatings, responseStats, recentMonths, MIN_RATERS, MIN_FUNCTIONS } from "../src/lib/participationRules.ts";
+
+test("Issue: personal details are stripped and the function must be a council one", () => {
+  const r = validateIssue({ fn: "roads", title: "Drain blocked on Rumuola Road, call 08031234567", detail: "The drain outside the market has been blocked since August and floods the road when it rains. My name is Chidi Okoro.", photoUrl: "https://example.com/p.jpg" });
+  assert.equal(r.ok, true);
+  if (r.ok) {
+    assert.ok(!r.value.title.includes("0803"));
+    assert.ok(!r.value.detail.includes("Chidi"));
+    assert.equal(r.value.photoUrl, "https://example.com/p.jpg");
+  }
+  assert.equal(validateIssue({ fn: "police", title: "Long enough title", detail: "Long enough detail for the validator to accept it." }).ok, false);
+  assert.equal(validateIssue({ fn: "roads", title: "short", detail: "Long enough detail for the validator to accept it." }).ok, false);
+  assert.equal(validateIssue({ fn: "roads", title: "Long enough title", detail: "Long enough detail for the validator to accept it.", photoUrl: "javascript:alert(1)" }).ok, false);
+});
+
+test("Rating: whole numbers 1-5 on at least the minimum functions, with an email address", () => {
+  const good = validateRating({ scores: { roads: 2, waste: "3", health: 5 }, email: " Ada@Example.com " });
+  assert.equal(good.ok, true);
+  if (good.ok) {
+    assert.deepEqual(good.value.scores, { roads: 2, waste: 3, health: 5 });
+    assert.equal(good.value.email, "ada@example.com");
+    assert.match(good.value.month, /^\d{4}-\d{2}$/);
+  }
+  assert.equal(validateRating({ scores: { roads: 6, waste: 3, health: 5 }, email: "a@b.co" }).ok, false, "out of range");
+  assert.equal(validateRating({ scores: { roads: 2.5, waste: 3, health: 5 }, email: "a@b.co" }).ok, false, "not whole");
+  assert.equal(validateRating({ scores: { roads: 2 }, email: "a@b.co" }).ok, false, `fewer than ${MIN_FUNCTIONS}`);
+  assert.equal(validateRating({ scores: { roads: 2, waste: 3, health: 5 }, email: "not-an-email" }).ok, false, "email");
+  assert.equal(validateRating({ scores: { roads: 2, waste: 3, health: 5, police: 1 }, email: "a@b.co" }).ok, true, "unknown keys are ignored");
+});
+
+test("Report card: nothing is published below the rater threshold; functions need 3 scores", () => {
+  const months = recentMonths(3);
+  assert.equal(months.length, 3);
+  const few = summariseRatings([{ scores: { roads: 5, waste: 5, health: 5 } }], months);
+  assert.equal(few.published, false);
+  assert.equal(few.overall, null);
+  const rows = Array.from({ length: MIN_RATERS }, (_, i) => ({ scores: { roads: 4, waste: 2, health: i < 2 ? 5 : undefined } }));
+  const card = summariseRatings(rows, months);
+  assert.equal(card.published, true);
+  assert.equal(card.overall, 3, "mean of roads (4) and waste (2); health has only 2 scores");
+  assert.equal(card.perFn.find((f) => f.key === "health")?.n, 2);
+});
+
+test("Response record: medians and overdue count", () => {
+  const d = (days: number) => new Date(Date.UTC(2026, 9, 1 + days));
+  const now = d(30);
+  const rows = [
+    { status: "resolved", createdAt: d(0), respondedAt: d(2), resolvedAt: d(10) },
+    { status: "acknowledged", createdAt: d(5), respondedAt: d(11), resolvedAt: null },
+    { status: "received", createdAt: d(10), respondedAt: null, resolvedAt: null },
+    { status: "received", createdAt: d(28), respondedAt: null, resolvedAt: null },
+  ];
+  const st = responseStats(rows, now);
+  assert.equal(st.total, 4);
+  assert.equal(st.responded, 2);
+  assert.equal(st.resolved, 1);
+  assert.equal(st.open, 3, "the resolved report is no longer open");
+  assert.equal(st.medianDaysToResponse, 4);
+  assert.equal(st.medianDaysToResolve, 10);
+  assert.equal(st.overdue, 1, "only the report filed 20 days ago is past 14 days without a response");
+});

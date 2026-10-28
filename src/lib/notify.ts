@@ -6,7 +6,7 @@
  *   - TERMII_API_KEY + TERMII_SENDER_ID + ALERT_SMS_TO   SMS through termii.com (Nigerian numbers)
  * Sending is fire-and-forget: a failed alert is logged and never blocks the resident's request.
  */
-export type Alert = { kind: "ticket" | "flag" | "enquiry"; lgaId: string; title: string; body: string; link: string };
+export type Alert = { kind: "ticket" | "flag" | "enquiry" | "issue"; lgaId: string; title: string; body: string; link: string };
 
 let warnedNoChannel = false;
 

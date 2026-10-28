@@ -8,6 +8,7 @@ const NATIONAL = [
   { href: "/", label: "Find your LGA", exact: true },
   { href: "/money", label: "Money" },
   { href: "/compare", label: "Compare" },
+  { href: "/issues", label: "Problems reported" },
   { href: "/about-answers", label: "How answers work" },
   { href: "/standard", label: "Open data" },
   { href: "/join", label: "For officials" },
@@ -80,6 +81,8 @@ export async function SiteHeader({ lga, demo, compiled, back }: { lga?: { id: st
               items={[
                 { href: `/${lga.id}`, label: t.nav.ask, exact: true },
                 { href: `/${lga.id}/talk`, label: talkDict(lang).tab },
+                { href: `/${lga.id}/issues`, label: t.nav.issues },
+                { href: `/${lga.id}/report-card`, label: t.nav.reportCard },
                 { href: `/${lga.id}/services`, label: t.nav.services },
                 { href: `/${lga.id}/projects`, label: t.nav.projects },
                 { href: `/${lga.id}/assets`, label: t.nav.assets },

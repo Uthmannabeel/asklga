@@ -3,7 +3,7 @@ import path from "node:path";
 import { sql } from "drizzle-orm";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "./schema";
-import { seedIfEmpty } from "./seed";
+import { seedIfEmpty, seedOfficials } from "./seed";
 import { seedDirectory } from "./directory";
 import { seedProfiles } from "./profiles";
 
@@ -64,6 +64,8 @@ async function create(): Promise<Db> {
   const autoSeed = process.env.AUTO_SEED ?? (process.env.DATABASE_URL ? "false" : "true");
   if (autoSeed === "true") {
     await seedIfEmpty(db);
+    const officials = await seedOfficials(db);
+    if (officials) console.log(`[db] officials seeded for the pilot council: ${officials}`);
   }
   // The national directory is not demo data: every LGA in the country gets a row.
   const added = await seedDirectory(db);

@@ -427,3 +427,18 @@ export async function seedIfEmpty(db: any) {
   }
   await db.execute(sql`SELECT 1`);
 }
+
+/** Obio/Akpor office holders as the council's own website and dated reports name them. Added once; staff edit from there. */
+const OFFICIALS: Omit<typeof s.officials.$inferInsert, "id">[] = [
+  { lgaId: LGA, role: "chairman", name: "Gift O. Worlu", title: "Hon. Dr.", since: "2025-09-01", ord: 0, source: src("Obio/Akpor council website, Executive Chairman page (Oct 2026); Elanhub, supplementary budget report (30 Oct 2025)"), sourceUrl: COUNCIL_SITE, approval: "approved" },
+  { lgaId: LGA, role: "leader", name: "Rex-Milia Abuchi Amadi", title: "Rt. Hon.", ord: 0, source: src("Obio/Akpor council website, 10th Legislative Council (Oct 2026)"), sourceUrl: COUNCIL_SITE, approval: "approved" },
+  { lgaId: LGA, role: "hlga", name: "Sunny Adibe", ord: 0, source: src("Obio/Akpor council website, news (Oct 2025)"), sourceUrl: COUNCIL_SITE, approval: "approved" },
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function seedOfficials(db: any) {
+  const any = await db.select({ id: s.officials.id }).from(s.officials).where(eq(s.officials.lgaId, LGA)).limit(1);
+  if (any.length) return 0;
+  await db.insert(s.officials).values(OFFICIALS);
+  return OFFICIALS.length;
+}

@@ -499,3 +499,30 @@ details.demo-banner > p { margin: 0.35rem 0 0; }
 .onfile a:hover .font-bold { text-decoration: underline; color: var(--civic); }
 .onfile-n { font-size: 1.6rem; font-weight: 700; color: var(--civic-deep); letter-spacing: -0.03em; line-height: 1; }
 .onfile-l { display: grid; gap: 0.1rem; }
+
+/* Resident participation: problem register, report card, officials. */
+.status-received { border-color: var(--caution); color: var(--caution); }
+.rating-grid { border-top: 1px solid var(--rule-strong); }
+.rating-row { display: grid; gap: 0.5rem; padding: 0.85rem 0; border-bottom: 1px solid var(--rule); margin: 0; border-left: 0; border-right: 0; border-top: 0; }
+.rating-row legend { padding: 0; float: left; width: 100%; }
+.rating-scale { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.rating-scale label { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 40px; padding: 0.25rem 0.7rem; border: 1px solid var(--rule-strong); border-radius: 999px; cursor: pointer; font-variant-numeric: tabular-nums; background: var(--paper); }
+.rating-scale label:has(input:checked) { background: var(--ink); color: #fff; border-color: var(--ink); }
+.rating-scale input { margin: 0; }
+.score-list { display: grid; border-top: 1px solid var(--rule-strong); }
+.score-row { display: grid; grid-template-columns: minmax(0, 1fr) 7rem 3rem; gap: 0.75rem; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--rule); }
+.score-bar { height: 0.55rem; background: var(--canvas); border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+.score-bar > span { display: block; height: 100%; background: var(--civic); }
+.score-bar.is-low > span { background: var(--caution); }
+.score-n { font-family: var(--font-mono), monospace; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.timeline { display: grid; gap: 0; border-left: 2px solid var(--rule); margin-left: 0.4rem; }
+.timeline > li { display: grid; gap: 0.15rem; padding: 0.25rem 0 1rem 1.1rem; position: relative; }
+.timeline > li::before { content: ""; position: absolute; left: -0.42rem; top: 0.55rem; width: 0.7rem; height: 0.7rem; border-radius: 999px; background: var(--paper); border: 2px solid var(--civic); }
+.quick-actions { display: grid; gap: 0.5rem; }
+.quick-actions a { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 0.9rem; border: 1px solid var(--rule-strong); border-radius: 6px; color: var(--ink); text-decoration: none; background: var(--paper); min-height: 48px; }
+.quick-actions a:hover { border-color: var(--ink); }
+.quick-actions a .task-arrow { flex: none; color: var(--civic); }
+.officials { display: grid; gap: 0.6rem; }
+.officials li { display: grid; gap: 0.1rem; }
+.officials .role { font-size: 0.82rem; color: var(--muted); }
+@media (max-width: 480px) { .score-row { grid-template-columns: minmax(0, 1fr) 5rem 2.5rem; } }

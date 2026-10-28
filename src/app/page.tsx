@@ -156,6 +156,8 @@ export default async function Home() {
           </div>
           <ul className="task-list">
             {[
+              ["issues", "Report a problem", "Public from the moment it is filed. The council's response is timed."],
+              ["report-card", "Score the council", "Nine constitutional functions, 1 to 5, published from five residents."],
               ["services", "Services and how to get them", "Who can apply, what to bring, where to go."],
               ["projects", "Projects on the ground", "Status, ward and when it was last checked."],
               ["assets", "Public assets on a map", "Clinics, schools, markets and boreholes, mapped."],

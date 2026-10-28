@@ -18,6 +18,8 @@ export default async function AdminLgaLayout({ params, children }: { params: Pro
     ["/services", "Services"],
     ["/investment", "Investment profile"],
     ["/documents", "Documents"],
+    ["/officials", "Officials"],
+    ["/issues", "Problems reported"],
     ["/gaps", "Data gaps"],
     ["/flags", "Flagged answers"],
     ["/tickets", "Tickets"],
